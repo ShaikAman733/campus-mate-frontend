@@ -1,0 +1,15 @@
+
+/* src/index.css */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Apply the font globally */
+body {
+  font-family: 'Outfit', sans-serif;
+  /* This makes the font look smoother on screens */
+  -webkit-font-smoothing: antialiased; 
+  -moz-osx-font-smoothing: grayscale;
+}

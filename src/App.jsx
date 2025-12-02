@@ -1,0 +1,484 @@
+// src/App.jsx
+import React, { useState, useEffect, useCallback } from 'react';
+import { 
+  Menu, Moon, Sun, LogIn, LogOut, User, 
+  ChevronDown, Settings, HelpCircle, UserCircle 
+} from 'lucide-react';
+import { Toaster, toast } from 'react-hot-toast';
+
+// Data & Components
+import { faqs } from './data';
+import Sidebar from './components/Sidebar';
+import ChatArea from './components/ChatArea';
+import ChatInput from './components/ChatInput';
+
+// Modals
+import NotesModal from './components/NotesModal';
+import EmailModal from './components/EmailModal';
+import ComplaintDeskModal from './components/ComplaintDeskModal';
+import GPACalculatorModal from './components/GPACalculatorModal';
+import LostFoundModal from './components/LostFoundModal';
+import CampusMapModal from './components/CampusMapModal';
+import AuthModal from './components/AuthsModal'; 
+import ProfileModal from './components/ProfileModal';
+import SettingsModal from './components/SettingsModal';
+import HelpSupportModal from './components/HelpSupportModal';
+
+// Constants
+const API_URL = import.meta.env.VITE_API_URL || 'https://campus-bot-node.onrender.com';
+
+const customStyles = `
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.3); border-radius: 10px; transition: all 0.2s ease; }
+  ::-webkit-scrollbar-thumb:hover { background: #00B291; }
+  .dark ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); }
+  .dark ::-webkit-scrollbar-thumb:hover { background: #00F5C8; }
+  
+  @keyframes slideUp { 0% { transform: translateY(10px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+  .animate-slide-up { animation: slideUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+  
+  @keyframes scaleIn { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  .animate-scale-in { animation: scaleIn 0.15s ease-out forwards; }
+  
+  .bg-grid-pattern { background-image: radial-gradient(rgba(0, 178, 145, 0.07) 1px, transparent 1px); background-size: 32px 32px; }
+  .dark .bg-grid-pattern { background-image: radial-gradient(rgba(0, 245, 200, 0.03) 1px, transparent 1px); }
+`;
+
+// --- HELPER: Convert File to Base64 ---
+const convertFileToBase64 = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = (error) => reject(error);
+  });
+};
+
+// --- CUSTOM HOOKS ---
+
+const useAuth = () => {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('campusMateUser');
+    if (storedUser) setCurrentUser(JSON.parse(storedUser));
+  }, []);
+
+  const login = useCallback((userData) => {
+    if (!userData) return;
+
+    setCurrentUser(prev => {
+        const updated = { ...prev, ...userData };
+        localStorage.setItem('campusMateUser', JSON.stringify(updated));
+        return updated;
+    });
+    
+    setIsAuthModalOpen(false);
+    
+    // Slight delay to ensure modal animation doesn't clip the toast
+    setTimeout(() => {
+      toast.success(`Welcome, ${userData.username || 'Student'}!`, {
+        icon: '👋',
+        style: {
+          borderRadius: '12px',
+          background: '#333',
+          color: '#fff',
+        },
+      });
+    }, 100);
+  }, []);
+
+  const logout = useCallback(() => {
+    setCurrentUser(null);
+    localStorage.removeItem('campusMateUser');
+    toast.success('Logged out successfully');
+  }, []);
+
+  return { currentUser, isAuthModalOpen, setIsAuthModalOpen, login, logout };
+};
+
+const useChat = (currentUser) => {
+  const [defaultId] = useState(Date.now()); 
+  const [sessions, setSessions] = useState([{ id: defaultId, messages: [] }]);
+  const [currentSessionId, setCurrentSessionId] = useState(defaultId);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+
+  useEffect(() => {
+    if (currentUser) {
+      fetch(`${API_URL}/api/get-chat/${currentUser._id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.sessions?.length > 0) {
+            setSessions(data.sessions);
+            setCurrentSessionId(data.sessions[0].id);
+          } else {
+            const newId = Date.now();
+            setSessions([{ id: newId, messages: [] }]);
+            setCurrentSessionId(newId); 
+          }
+        })
+        .catch(() => console.log('Syncing history locally...'));
+    } else {
+      const saved = localStorage.getItem('chatSessions');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setSessions(parsed);
+        if (parsed.length > 0) setCurrentSessionId(parsed[0].id);
+      }
+    }
+  }, [currentUser]);
+
+  const saveSessions = useCallback(async (updatedSessions) => {
+    setSessions(updatedSessions);
+    if (currentUser) {
+      try {
+        await fetch(`${API_URL}/api/save-chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: currentUser._id, sessions: updatedSessions }),
+        });
+      } catch (err) { console.error("Save error", err); }
+    } else {
+      localStorage.setItem('chatSessions', JSON.stringify(updatedSessions));
+    }
+  }, [currentUser]);
+
+  const createNewChat = useCallback(() => {
+    if (isTyping) return;
+    const newSession = { id: Date.now(), messages: [] };
+    const updated = [newSession, ...sessions];
+    setCurrentSessionId(newSession.id);
+    saveSessions(updated);
+  }, [sessions, isTyping, saveSessions]);
+
+  const deleteChat = useCallback((e, id) => {
+    e.stopPropagation();
+    if (isTyping) return;
+    const updated = sessions.filter(s => s.id !== id);
+    const finalSessions = updated.length ? updated : [{ id: Date.now(), messages: [] }];
+    setSessions(finalSessions);
+    if (currentSessionId === id) setCurrentSessionId(finalSessions[0].id);
+    saveSessions(finalSessions);
+    toast.success('Chat deleted');
+  }, [sessions, currentSessionId, isTyping, saveSessions]);
+
+  const streamResponse = async (fullText, sessionId, currentSessions) => {
+    setIsTyping(true);
+    let currentText = "";
+    const chunkSize = 2; 
+    let activeSessions = currentSessions.map(s => 
+      s.id === sessionId ? { ...s, messages: [...s.messages, { type: 'bot', text: '', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }] } : s
+    );
+    setSessions(activeSessions);
+
+    for (let i = 0; i < fullText.length; i += chunkSize) {
+      currentText += fullText.slice(i, i + chunkSize);
+      
+      setSessions(prev => prev.map(s => {
+        if (s.id === sessionId) {
+          const msgs = [...s.messages];
+          const lastMsg = msgs[msgs.length - 1];
+          if (lastMsg.type === 'bot') {
+            msgs[msgs.length - 1] = { ...lastMsg, text: currentText };
+          }
+          return { ...s, messages: msgs };
+        }
+        return s;
+      }));
+      await new Promise(r => setTimeout(r, 10)); 
+    }
+
+    setIsTyping(false);
+    
+    const finalSessions = activeSessions.map(s => {
+      if (s.id === sessionId) {
+        const msgs = [...s.messages];
+        msgs[msgs.length - 1] = { ...msgs[msgs.length - 1], text: fullText };
+        return { ...s, messages: msgs };
+      }
+      return s;
+    });
+    saveSessions(finalSessions);
+  };
+
+  const sendMessage = async (text, file) => {
+    if ((!text.trim() && !file) || isTyping) return;
+    
+    const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    let activeSessionId = currentSessionId;
+    
+    const sessionExists = sessions.some(s => s.id === activeSessionId);
+    if (!sessionExists) {
+        if (sessions.length > 0) {
+            activeSessionId = sessions[0].id;
+            setCurrentSessionId(activeSessionId);
+        } else {
+            const newId = Date.now();
+            const newSession = { id: newId, messages: [] };
+            setSessions([newSession]);
+            setCurrentSessionId(newId);
+            activeSessionId = newId;
+        }
+    }
+
+    const userMessage = { 
+        type: 'user', 
+        text: text, 
+        time: timestamp,
+        file: file ? { name: file.name, type: file.type } : null 
+    };
+
+    const updatedWithUser = sessions.map(s => 
+      s.id === activeSessionId ? { ...s, messages: [...s.messages, userMessage] } : s
+    );
+    
+    saveSessions(updatedWithUser);
+    setIsLoading(true);
+
+    try {
+      let payload = { message: text };
+      if (file) {
+        const base64Data = await convertFileToBase64(file);
+        payload.file = {
+            name: file.name,
+            mime_type: file.type,
+            data: base64Data 
+        };
+      }
+
+      const response = await fetch(`${API_URL}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      setIsLoading(false);
+      await streamResponse(data.response || "I didn't get that. Could you try again?", activeSessionId, updatedWithUser);
+    } catch (error) {
+      setIsLoading(false);
+      await streamResponse("⚠️ I'm having trouble connecting to the server. Please try again later.", activeSessionId, updatedWithUser);
+    }
+  };
+
+  return { sessions, setSessions, currentSessionId, setCurrentSessionId, isLoading, isTyping, sendMessage, createNewChat, deleteChat };
+};
+
+// --- COMPONENT: USER AVATAR ---
+const UserAvatar = ({ user, className = "h-8 w-8", textClass="text-sm" }) => {
+    if (!user) return <div className={`${className} rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center`}><User className="h-1/2 w-1/2 text-gray-400" /></div>;
+    
+    if (user.avatar) {
+      return <img src={user.avatar} alt={user.username} className={`${className} rounded-full object-cover ring-2 ring-white dark:ring-[#1a1a1a] shadow-sm`} />;
+    }
+    return (
+      <div className={`${className} rounded-full bg-gradient-to-br from-[#00B291] to-[#00F5C8] flex items-center justify-center text-white font-bold shadow-sm ring-2 ring-white dark:ring-[#1a1a1a] ${textClass}`}>
+        {user.username ? user.username.charAt(0).toUpperCase() : 'U'}
+      </div>
+    );
+};
+
+// --- MAIN APP COMPONENT ---
+const App = () => {
+  const { currentUser, isAuthModalOpen, setIsAuthModalOpen, login, logout: authLogout } = useAuth();
+  const { 
+    sessions, setSessions, currentSessionId, setCurrentSessionId, 
+    isLoading, isTyping, sendMessage, createNewChat, deleteChat 
+  } = useChat(currentUser);
+
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const savedMode = localStorage.getItem('campusMateDarkMode');
+    return savedMode !== null ? JSON.parse(savedMode) : true;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('campusMateDarkMode', JSON.stringify(isDarkMode));
+  }, [isDarkMode]);
+
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [activeModal, setActiveModal] = useState(null);
+  const [inputMessage, setInputMessage] = useState('');
+  const [currentFaqIndex, setCurrentFaqIndex] = useState(0);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (window.innerWidth < 768) setIsSidebarOpen(false);
+  }, []);
+
+  const handleLogout = () => {
+    setIsProfileMenuOpen(false);
+    authLogout();
+    const newId = Date.now();
+    setSessions([{ id: newId, messages: [] }]);
+    setCurrentSessionId(newId);
+  };
+
+  const handleNewChatWrapper = () => {
+    createNewChat();
+    if (window.innerWidth < 768) setIsSidebarOpen(false);
+  };
+
+  useEffect(() => {
+    if (inputMessage.length > 0) return;
+    const interval = setInterval(() => {
+      setCurrentFaqIndex((prev) => (prev + 1) % faqs.length);
+    }, 4000); 
+    return () => clearInterval(interval);
+  }, [inputMessage]);
+
+  const handleSendWrapper = (text, file) => {
+    sendMessage(text || inputMessage, file);
+    setInputMessage('');
+    if (window.innerWidth < 768) setIsSidebarOpen(false);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendWrapper(inputMessage, null);
+    }
+  };
+
+  const getCurrentMessages = useCallback(() => {
+    return sessions.find(s => s.id === currentSessionId)?.messages || [];
+  }, [sessions, currentSessionId]);
+
+  const handleClearAllHistory = () => {
+    const newId = Date.now();
+    setSessions([{ id: newId, messages: [] }]);
+    setCurrentSessionId(newId);
+    localStorage.removeItem('chatSessions');
+    toast.success("Chat history cleared");
+  };
+
+  const renderModal = () => {
+    const commonProps = { onClose: () => setActiveModal(null) };
+    const modals = {
+      notes: <NotesModal isOpen={true} {...commonProps} />,
+      email: <EmailModal isOpen={true} {...commonProps} />,
+      gpa: <GPACalculatorModal isOpen={true} {...commonProps} />,
+      complaint: <ComplaintDeskModal isOpen={true} {...commonProps} />,
+      lostfound: <LostFoundModal isOpen={true} {...commonProps} />,
+      map: <CampusMapModal isOpen={true} {...commonProps} />,
+      profile: <ProfileModal isOpen={true} {...commonProps} currentUser={currentUser} onUpdateUser={login} />,
+      settings: <SettingsModal isOpen={true} {...commonProps} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} onClearHistory={handleClearAllHistory} />,
+      help: <HelpSupportModal isOpen={true} {...commonProps} faqs={faqs} />
+    };
+    return modals[activeModal] || null;
+  };
+
+  return (
+    <div className={`${isDarkMode ? 'dark' : ''} h-screen w-full flex overflow-hidden font-sans bg-gray-50 dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100`}>
+      <style>{customStyles}</style>
+      
+      {/* CRITICAL FIX: Z-Index 99999 ensures toast appears ABOVE the modal backdrop. 
+      */}
+      <Toaster 
+        position="top-center" 
+        containerStyle={{ zIndex: 99999 }}
+        toastOptions={{ 
+          duration: 3000, 
+          style: { background: isDarkMode ? '#333' : '#fff', color: isDarkMode ? '#fff' : '#000' } 
+        }} 
+      />
+
+      <div 
+        className={`md:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} 
+        onClick={() => setIsSidebarOpen(false)} 
+      />
+      
+      {isProfileMenuOpen && <div className="fixed inset-0 z-20 bg-transparent cursor-default" onClick={() => setIsProfileMenuOpen(false)} />}
+
+      <div className={`h-full z-50 transition-all duration-300 ${isSidebarOpen ? 'relative' : ''}`}>
+        <Sidebar
+          isOpen={isSidebarOpen}
+          setIsOpen={setIsSidebarOpen}
+          handleNewChat={handleNewChatWrapper} 
+          isTyping={isTyping}
+          sessions={sessions}
+          currentSessionId={currentSessionId}
+          setCurrentSessionId={setCurrentSessionId}
+          handleDeleteChat={deleteChat}
+          setActiveModal={setActiveModal}
+          currentUser={currentUser}
+        />
+      </div>
+
+      <main className="flex-1 flex flex-col h-full relative bg-white dark:bg-[#0a0a0a] bg-grid-pattern">
+        
+        <header className="h-16 px-4 md:px-6 flex items-center justify-between border-b border-gray-200 dark:border-gray-800/60 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-xl sticky top-0 z-30 transition-colors">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
+              className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 transition-colors active:scale-95"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+              <h1 className="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white leading-none">
+                Campus<span className="text-[#00B291] dark:text-[#00F5C8]">Mate</span>
+              </h1>
+          </div>
+
+          <div className="flex items-center gap-2 md:gap-4">
+            <button 
+              onClick={() => setIsDarkMode(!isDarkMode)} 
+              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-[#1a1a1a] text-gray-500 dark:text-gray-400 transition-colors active:scale-95 active:rotate-45"
+              title="Toggle Theme"
+            >
+              {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </button>
+
+            <div className="h-6 w-px bg-gray-200 dark:bg-gray-800 mx-1"></div>
+
+            {currentUser ? (
+              <div className="relative z-30">
+                <button 
+                  onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)} 
+                  className={`flex items-center gap-2 pl-1 pr-3 py-1 rounded-full border transition-all duration-200 ${isProfileMenuOpen ? 'bg-[#00B291]/10 border-[#00B291] dark:border-[#00F5C8] shadow-sm' : 'bg-transparent border-transparent hover:bg-gray-100 dark:hover:bg-[#1a1a1a]'}`}
+                >
+                  <UserAvatar user={currentUser} className="h-8 w-8" textClass="text-xs" />
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-200 max-w-[100px] truncate hidden md:block">{currentUser.username}</span>
+                  <ChevronDown className={`h-3 w-3 text-gray-400 transition-transform duration-200 ${isProfileMenuOpen ? 'rotate-180 text-[#00B291]' : ''}`} />
+                </button>
+
+                {isProfileMenuOpen && (
+                  <div onClick={(e) => e.stopPropagation()} className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl shadow-gray-200/50 dark:shadow-black/50 overflow-hidden animate-scale-in origin-top-right cursor-default ring-1 ring-black/5">
+                    <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-white/5 flex items-center gap-3">
+                      <UserAvatar user={currentUser} className="h-10 w-10" textClass="text-lg" />
+                      <div className="overflow-hidden">
+                        <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{currentUser.username}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{currentUser.email || 'Your Account'}</p>
+                      </div>
+                    </div>
+                    <div className="p-2 space-y-1">
+                      <button onClick={() => { setActiveModal('profile'); setIsProfileMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#202020] rounded-xl transition-colors text-left"><div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"><UserCircle className="h-4 w-4" /></div>My Profile</button>
+                      <button onClick={() => { setActiveModal('settings'); setIsProfileMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#202020] rounded-xl transition-colors text-left"><div className="p-1.5 rounded-lg bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400"><Settings className="h-4 w-4" /></div>Settings</button>
+                      <button onClick={() => { setActiveModal('help'); setIsProfileMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#202020] rounded-xl transition-colors text-left"><div className="p-1.5 rounded-lg bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400"><HelpCircle className="h-4 w-4" /></div>Help & Support</button>
+                    </div>
+                    <div className="p-2 border-t border-gray-100 dark:border-gray-800">
+                      <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-colors text-left"><div className="p-1.5 rounded-lg bg-red-50 dark:bg-red-900/10 text-red-500"><LogOut className="h-4 w-4" /></div>Sign Out</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button onClick={() => setIsAuthModalOpen(true)} className="flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-[#00B291] to-[#00F5C8] text-white hover:opacity-90 transition-all transform hover:scale-105 shadow-lg shadow-[#00B291]/20 text-sm font-bold active:scale-95">
+                <LogIn className="h-4 w-4" /><span className="hidden sm:inline">Login</span>
+              </button>
+            )}
+          </div>
+        </header>
+
+        <ChatArea messages={getCurrentMessages()} isLoading={isLoading} suggestionText={faqs[currentFaqIndex]} currentUser={currentUser} />
+        <ChatInput inputMessage={inputMessage} setInputMessage={setInputMessage} handleSendMessage={handleSendWrapper} handleKeyPress={handleKeyPress} isLoading={isLoading} isTyping={isTyping} />
+      </main>
+
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} onLogin={login} />
+      <div className="relative z-50">{renderModal()}</div>
+    </div>
+  );
+};
+
+export default App;
