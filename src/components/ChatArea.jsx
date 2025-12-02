@@ -4,7 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { FileText } from 'lucide-react';
 
-import botLogo from '../assets/bot-logo.png';
+import botLogo from '../assets/campus-logo.png';
 import userLogo from '../assets/user-logo.png'; // 1. IMPORT YOUR NEW LOGO HERE
 
 const ChatArea = ({ messages, isLoading, suggestionText, currentUser }) => {
