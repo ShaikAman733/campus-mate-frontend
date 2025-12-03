@@ -4,19 +4,12 @@ import {
   Plus, Wrench, History, Compass, ChevronDown, ChevronRight,
   ExternalLink, Bell, Download, Mail, Search, MessageSquare,
   Trash2, Globe, X, Calculator, AlertTriangle, Map,
-  User, Settings, Sparkles, Clock, Lightbulb,
-  DoorClosed,
-  DoorClosedLockedIcon,
-  DoorOpen,
-  TimerIcon,
-  IdCardLanyardIcon,
-  IndentDecrease
+  User, Settings, Sparkles, Clock
 } from 'lucide-react';
 import { departments, updates } from '../data';
 
 // --- HELPER COMPONENTS ---
 
-// New: Modern Card for Tools
 const ToolCard = ({ icon: Icon, label, colorClass, bgClass, onClick }) => (
   <button 
     onClick={onClick} 
@@ -65,7 +58,6 @@ const Sidebar = ({
   currentUser
 }) => {
   const [sidebarMode, setSidebarMode] = useState('tools'); 
-  // UPDATED: Default is null so Explore starts closed
   const [expandedSidebarItem, setExpandedSidebarItem] = useState(null); 
   const [historySearch, setHistorySearch] = useState('');
 
@@ -94,9 +86,7 @@ const Sidebar = ({
         .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; }
       `}</style>
 
-      {/* MOBILE OVERLAY: Closes sidebar when clicking outside on mobile.
-         Only visible when isOpen is true and screen is small (md:hidden).
-      */}
+      {/* MOBILE OVERLAY */}
       {isOpen && (
         <div 
           className="fixed inset-0 z-10 bg-black/20 backdrop-blur-sm md:hidden"
@@ -109,10 +99,19 @@ const Sidebar = ({
         transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1) flex flex-col overflow-hidden
         ${isOpen ? 'w-80 translate-x-0 opacity-100 shadow-2xl md:shadow-none' : 'w-0 -translate-x-full opacity-0 md:translate-x-0 md:w-0 md:border-none'}
       `}>
-        <div className={`flex flex-col h-full w-80 transition-opacity duration-300 ${isOpen ? 'opacity-100 delay-100' : 'opacity-0'}`}>
+        {/* UPDATED WRAPPER: 
+            1. 'overflow-y-auto' enables scrolling for the WHOLE sidebar on mobile.
+            2. 'md:overflow-hidden' disables whole-sidebar scrolling on desktop (so only content scrolls).
+            3. 'custom-scrollbar' applied here for mobile view.
+        */}
+        <div className={`
+          flex flex-col h-full w-80 transition-opacity duration-300 
+          overflow-y-auto md:overflow-hidden custom-scrollbar
+          ${isOpen ? 'opacity-100 delay-100' : 'opacity-0'}
+        `}>
 
-          {/* Header */}
-          <div className="h-20 flex items-center justify-between px-6 border-b border-gray-200 dark:border-gray-800 shrink-0 bg-white/50 dark:bg-[#1a1a1a]/50 backdrop-blur-sm">
+          {/* Header - UPDATED: Sticky top-0 so X button is always visible on mobile */}
+          <div className="sticky top-0 z-50 h-20 flex items-center justify-between px-6 border-b border-gray-200 dark:border-gray-800 shrink-0 bg-white/95 dark:bg-[#1a1a1a]/95 backdrop-blur-sm">
             <div className="flex flex-col gap-1">
               <h1 className="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white leading-none">
                 Campus<span className="text-[#00B291] dark:text-[#00F5C8]">Mate</span>
@@ -201,8 +200,12 @@ const Sidebar = ({
 
           <div className="h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-800 to-transparent mx-5 shrink-0" />
 
-          {/* Content Area */}
-          <div className="flex-1 overflow-y-auto p-5 custom-scrollbar space-y-5">
+          {/* Content Area - UPDATED: 
+             1. Removed 'overflow-y-auto' from base class (so it doesn't trap scroll on mobile).
+             2. Added 'md:overflow-y-auto' (re-enables internal scrolling ONLY on desktop).
+             3. 'overflow-visible' allows content to expand naturally on mobile.
+          */}
+          <div className="flex-1 p-5 space-y-5 overflow-visible md:overflow-y-auto md:custom-scrollbar">
             {sidebarMode === 'tools' && (
               <div className="animate-fade-in space-y-5">
 
@@ -243,7 +246,7 @@ const Sidebar = ({
                   ))}
                 </AccordionItem>
 
-                {/* NEW: 2-Column Tool Grid */}
+                {/* 2-Column Tool Grid */}
                 <div>
                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">Quick Access</h3>
                    <div className="grid grid-cols-2 gap-3">
@@ -292,7 +295,7 @@ const Sidebar = ({
                    </div>
                 </div>
 
-                {/* Semester Progress Widget */}
+                {/* Semester Progress */}
                 <div className="p-4 rounded-2xl bg-gradient-to-r from-gray-50 to-white dark:from-[#202020] dark:to-[#151515] border border-gray-100 dark:border-gray-800 shadow-sm">
                   <div className="flex justify-between items-center mb-3">
                     <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Semester Status</span>
@@ -307,7 +310,7 @@ const Sidebar = ({
                   </div>
                 </div>
 
-                {/* Daily Insight Card */}
+                {/* Daily Insight */}
                 <div className="p-4 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/10 border border-amber-100 dark:border-amber-900/30 relative overflow-hidden group">
                    <div className="absolute -top-2 -right-2 p-2 opacity-10 group-hover:opacity-20 transition-opacity"><Clock className="h-20 w-20 text-yellow-500"/></div>
                    <div className="flex items-center gap-2 mb-2 relative z-10">
@@ -376,7 +379,7 @@ const Sidebar = ({
             )}
           </div>
 
-          {/* Footer */}
+          {/* Footer - No changes needed, it flows naturally on mobile now */}
           <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-[#1a1a1a]/50 shrink-0 backdrop-blur-sm">
             <a href="https://rljit.in/" target="_blank" rel="noreferrer noopener" className="flex items-center justify-center gap-2 w-full py-2.5 text-xs font-semibold text-gray-500 hover:text-[#00B291] dark:hover:text-[#00F5C8] dark:text-gray-400 transition-colors group rounded-lg hover:bg-white dark:hover:bg-[#202020]">
               <Globe className="h-3.5 w-3.5 group-hover:animate-spin-slow" /> 

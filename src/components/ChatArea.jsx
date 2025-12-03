@@ -5,7 +5,7 @@ import remarkGfm from 'remark-gfm';
 import { FileText } from 'lucide-react';
 
 import botLogo from '../assets/campus-logo.png';
-import userLogo from '../assets/user-logo.png'; // 1. IMPORT YOUR NEW LOGO HERE
+import userLogo from '../assets/user-logo.png'; 
 
 const ChatArea = ({ messages, isLoading, suggestionText, currentUser }) => {
   const messagesEndRef = useRef(null);
@@ -30,7 +30,7 @@ const ChatArea = ({ messages, isLoading, suggestionText, currentUser }) => {
 
   return (
     <div className="relative flex-1 h-full overflow-hidden bg-gray-50 dark:bg-[#0a0a0a]">
-      <div ref={scrollContainerRef} onScroll={handleScroll} className="h-full overflow-y-auto p-4 md:p-6 space-y-6 scroll-smooth">
+      <div ref={scrollContainerRef} onScroll={handleScroll} className="h-full overflow-y-auto p-3 md:p-6 space-y-4 md:space-y-6 scroll-smooth">
         
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center p-4 animate-fade-in">
@@ -47,32 +47,35 @@ const ChatArea = ({ messages, isLoading, suggestionText, currentUser }) => {
             </div>
           </div>
         ) : (
-          <div className="flex flex-col space-y-6 pb-4">
+          <div className="flex flex-col space-y-4 md:space-y-6 pb-4">
             {messages.map((msg, index) => {
               const isUser = msg.type === 'user';
               return (
                 <div key={index} className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2 duration-300`}>
-                  <div className={`flex max-w-[85%] md:max-w-[75%] gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
+                  {/* 1. Adjusted Max Width and Gap for Mobile */}
+                  <div className={`flex max-w-[90%] md:max-w-[75%] gap-2 md:gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
                     
                     {/* AVATAR CONTAINER */}
-                    <div className={`shrink-0 h-12 w-12 rounded-full flex items-center justify-center text-xs font-bold shadow-sm select-none overflow-hidden ${isUser ? 'bg-gray-800 text-white  dark:text-black' : ' dark:bg-[#1a1a1a] dark:border-gray-700'}`}>
+                    {/* 2. Reduced Avatar size on mobile (h-8 w-8) -> Desktop (md:h-12 md:w-12) */}
+                    <div className={`shrink-0 h-8 w-8 md:h-12 md:w-12 rounded-full flex items-center justify-center text-xs font-bold shadow-sm select-none overflow-hidden ${isUser ? 'bg-gray-800 text-white  dark:text-black' : ' dark:bg-[#1a1a1a] dark:border-gray-700'}`}>
                       {isUser ? (
-                        // 2. UPDATED: Render User Image instead of Div
                         <img 
                           src={userLogo} 
                           alt="User" 
-                          className="shrink-0 h-12 w-12 object-cover" 
+                          className="shrink-0 h-8 w-8 md:h-12 md:w-12 object-cover" 
                         />
                       ) : (
                         <img 
                           src={botLogo} 
                           alt="AI" 
-                          className="shrink-0 h-12 w-12 object-contain" 
+                          className="shrink-0 h-8 w-8 md:h-12 md:w-12 object-contain" 
                         />
                       )}
                     </div>
 
-                    <div className={`relative px-5 py-3.5 text-sm md:text-base shadow-sm ${isUser ? 'bg-white text-gray-800 dark:bg-[#262626] dark:text-gray-100 rounded-2xl rounded-tr-sm' : 'bg-white dark:bg-[#1a1a1a] border border-gray-100 dark:border-gray-800 text-gray-800 dark:text-gray-200 rounded-2xl rounded-tl-sm'}`}>
+                    {/* MESSAGE BUBBLE */}
+                    {/* 3. Reduced Padding on mobile (px-3 py-2) -> Desktop (md:px-5 md:py-3.5) */}
+                    <div className={`relative px-3 py-2 md:px-5 md:py-3.5 text-sm md:text-base shadow-sm ${isUser ? 'bg-white text-gray-800 dark:bg-[#262626] dark:text-gray-100 rounded-2xl rounded-tr-sm' : 'bg-white dark:bg-[#1a1a1a] border border-gray-100 dark:border-gray-800 text-gray-800 dark:text-gray-200 rounded-2xl rounded-tl-sm'}`}>
                       
                       {msg.file && (
                         <div className="mb-3 p-2 bg-gray-100 dark:bg-[#333] rounded-lg flex items-center gap-3 border border-gray-200 dark:border-gray-600">
@@ -87,21 +90,21 @@ const ChatArea = ({ messages, isLoading, suggestionText, currentUser }) => {
                       )}
 
                       <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
-                          ul: ({ node, ...props }) => <ul className="list-disc pl-4 mb-3 space-y-1" {...props} />,
-                          ol: ({ node, ...props }) => <ol className="list-decimal pl-4 mb-3 space-y-1" {...props} />,
+                          ul: ({ node, ...props }) => <ul className="list-disc pl-4 mb-2 md:mb-3 space-y-1" {...props} />,
+                          ol: ({ node, ...props }) => <ol className="list-decimal pl-4 mb-2 md:mb-3 space-y-1" {...props} />,
                           h1: ({ node, ...props }) => <h1 className="text-lg font-bold mb-2 mt-4" {...props} />,
                           h2: ({ node, ...props }) => <h2 className="text-base font-bold mb-2 mt-3" {...props} />,
                           h3: ({ node, ...props }) => <h3 className="text-sm font-bold mb-1 mt-2" {...props} />,
                           a: ({ node, ...props }) => <a className="text-[#00B291] hover:underline break-all" target="_blank" rel="noopener noreferrer" {...props} />,
-                          p: ({ node, ...props }) => <p className="mb-2 last:mb-0 leading-relaxed" {...props} />,
-                          code: ({ node, inline, className, children, ...props }) => inline ? <code className="bg-gray-100 dark:bg-gray-800 text-red-500 dark:text-red-400 px-1 py-0.5 rounded font-mono text-xs" {...props}>{children}</code> : <div className="overflow-x-auto my-3 rounded-lg border border-gray-200 dark:border-gray-700"><code className="block bg-gray-50 dark:bg-[#111] p-3 font-mono text-xs md:text-sm text-gray-800 dark:text-gray-300" {...props}>{children}</code></div>,
-                          table: ({ node, ...props }) => <div className="overflow-x-auto my-4"><table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 border dark:border-gray-700" {...props} /></div>,
+                          p: ({ node, ...props }) => <p className="mb-1 md:mb-2 last:mb-0 leading-relaxed" {...props} />,
+                          code: ({ node, inline, className, children, ...props }) => inline ? <code className="bg-gray-100 dark:bg-gray-800 text-red-500 dark:text-red-400 px-1 py-0.5 rounded font-mono text-xs" {...props}>{children}</code> : <div className="overflow-x-auto my-2 md:my-3 rounded-lg border border-gray-200 dark:border-gray-700"><code className="block bg-gray-50 dark:bg-[#111] p-2 md:p-3 font-mono text-xs md:text-sm text-gray-800 dark:text-gray-300" {...props}>{children}</code></div>,
+                          table: ({ node, ...props }) => <div className="overflow-x-auto my-3 md:my-4"><table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 border dark:border-gray-700" {...props} /></div>,
                           th: ({ node, ...props }) => <th className="px-3 py-2 bg-gray-50 dark:bg-gray-800 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" {...props} />,
                           td: ({ node, ...props }) => <td className="px-3 py-2 whitespace-nowrap text-sm border-t dark:border-gray-700" {...props} />,
                         }}>
                         {msg.text}
                       </ReactMarkdown>
-                      <div className={`text-[10px] mt-1.5 select-none opacity-60 flex items-center gap-1 ${isUser ? 'justify-end' : 'justify-start'}`}>{msg.time}{isUser && <span>• Sent</span>}</div>
+                      <div className={`text-[10px] mt-1 select-none opacity-60 flex items-center gap-1 ${isUser ? 'justify-end' : 'justify-start'}`}>{msg.time}{isUser && <span>• Sent</span>}</div>
                     </div>
                   </div>
                 </div>
@@ -110,9 +113,10 @@ const ChatArea = ({ messages, isLoading, suggestionText, currentUser }) => {
             
             {isLoading && (
               <div className="flex w-full justify-start animate-pulse">
-                <div className="flex max-w-[75%] gap-3">
-                  <img src={botLogo} alt="Loading..." className="shrink-0 h-12 w-12 object-contain opacity-70" />
-                  <div className="flex items-center gap-1 px-4 py-3 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-2xl rounded-tl-sm">
+                {/* 4. Adjusted Loading Skeleton for Mobile */}
+                <div className="flex max-w-[90%] md:max-w-[75%] gap-2 md:gap-3">
+                  <img src={botLogo} alt="Loading..." className="shrink-0 h-8 w-8 md:h-12 md:w-12 object-contain opacity-70" />
+                  <div className="flex items-center gap-1 px-3 py-2 md:px-4 md:py-3 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-2xl rounded-tl-sm">
                     <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></span>
                     <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce delay-75"></span>
                     <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce delay-150"></span>
