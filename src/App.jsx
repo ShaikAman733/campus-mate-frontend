@@ -1,5 +1,6 @@
 // src/App.jsx
 import React, { useState, useEffect, useCallback } from 'react';
+import BackendLoader from './components/BackendLoader'; // ✅ Imported here
 import { 
   Menu, Moon, Sun, LogIn, LogOut, User, 
   ChevronDown, Settings, HelpCircle, UserCircle 
@@ -77,7 +78,6 @@ const useAuth = () => {
     
     setIsAuthModalOpen(false);
     
-    // Slight delay to ensure modal animation doesn't clip the toast
     setTimeout(() => {
       toast.success(`Welcome, ${userData.username || 'Student'}!`, {
         icon: '👋',
@@ -370,114 +370,115 @@ const App = () => {
   };
 
   return (
-    <div className={`${isDarkMode ? 'dark' : ''} h-screen w-full flex overflow-hidden font-sans bg-gray-50 dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100`}>
-      <style>{customStyles}</style>
-      
-      {/* CRITICAL FIX: Z-Index 99999 ensures toast appears ABOVE the modal backdrop. 
-      */}
-      <Toaster 
-        position="top-center" 
-        containerStyle={{ zIndex: 99999 }}
-        toastOptions={{ 
-          duration: 3000, 
-          style: { background: isDarkMode ? '#333' : '#fff', color: isDarkMode ? '#fff' : '#000' } 
-        }} 
-      />
+    // ✅ WRAPPED WITH BACKEND LOADER
+    <BackendLoader>
+        <div className={`${isDarkMode ? 'dark' : ''} h-screen w-full flex overflow-hidden font-sans bg-gray-50 dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100`}>
+          <style>{customStyles}</style>
+          
+          <Toaster 
+            position="top-center" 
+            containerStyle={{ zIndex: 99999 }}
+            toastOptions={{ 
+              duration: 3000, 
+              style: { background: isDarkMode ? '#333' : '#fff', color: isDarkMode ? '#fff' : '#000' } 
+            }} 
+          />
 
-      <div 
-        className={`md:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} 
-        onClick={() => setIsSidebarOpen(false)} 
-      />
-      
-      {isProfileMenuOpen && <div className="fixed inset-0 z-20 bg-transparent cursor-default" onClick={() => setIsProfileMenuOpen(false)} />}
+          <div 
+            className={`md:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} 
+            onClick={() => setIsSidebarOpen(false)} 
+          />
+          
+          {isProfileMenuOpen && <div className="fixed inset-0 z-20 bg-transparent cursor-default" onClick={() => setIsProfileMenuOpen(false)} />}
 
-      <div className={`h-full z-50 transition-all duration-300 ${isSidebarOpen ? 'relative' : ''}`}>
-        <Sidebar
-          isOpen={isSidebarOpen}
-          setIsOpen={setIsSidebarOpen}
-          handleNewChat={handleNewChatWrapper} 
-          isTyping={isTyping}
-          sessions={sessions}
-          currentSessionId={currentSessionId}
-          setCurrentSessionId={setCurrentSessionId}
-          handleDeleteChat={deleteChat}
-          setActiveModal={setActiveModal}
-          currentUser={currentUser}
-        />
-      </div>
-
-      <main className="flex-1 flex flex-col h-full relative bg-white dark:bg-[#0a0a0a] bg-grid-pattern">
-        
-        <header className="h-16 px-4 md:px-6 flex items-center justify-between border-b border-gray-200 dark:border-gray-800/60 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-xl sticky top-0 z-30 transition-colors">
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
-              className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 transition-colors active:scale-95"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
-              <h1 className="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white leading-none">
-                Campus<span className="text-[#00B291] dark:text-[#00F5C8]">Mate</span>
-              </h1>
+          <div className={`h-full z-50 transition-all duration-300 ${isSidebarOpen ? 'relative' : ''}`}>
+            <Sidebar
+              isOpen={isSidebarOpen}
+              setIsOpen={setIsSidebarOpen}
+              handleNewChat={handleNewChatWrapper} 
+              isTyping={isTyping}
+              sessions={sessions}
+              currentSessionId={currentSessionId}
+              setCurrentSessionId={setCurrentSessionId}
+              handleDeleteChat={deleteChat}
+              setActiveModal={setActiveModal}
+              currentUser={currentUser}
+            />
           </div>
 
-          <div className="flex items-center gap-2 md:gap-4">
-            <button 
-              onClick={() => setIsDarkMode(!isDarkMode)} 
-              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-[#1a1a1a] text-gray-500 dark:text-gray-400 transition-colors active:scale-95 active:rotate-45"
-              title="Toggle Theme"
-            >
-              {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            </button>
-
-            <div className="h-6 w-px bg-gray-200 dark:bg-gray-800 mx-1"></div>
-
-            {currentUser ? (
-              <div className="relative z-30">
+          <main className="flex-1 flex flex-col h-full relative bg-white dark:bg-[#0a0a0a] bg-grid-pattern">
+            
+            <header className="h-16 px-4 md:px-6 flex items-center justify-between border-b border-gray-200 dark:border-gray-800/60 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-xl sticky top-0 z-30 transition-colors">
+              <div className="flex items-center gap-3">
                 <button 
-                  onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)} 
-                  className={`flex items-center gap-2 pl-1 pr-3 py-1 rounded-full border transition-all duration-200 ${isProfileMenuOpen ? 'bg-[#00B291]/10 border-[#00B291] dark:border-[#00F5C8] shadow-sm' : 'bg-transparent border-transparent hover:bg-gray-100 dark:hover:bg-[#1a1a1a]'}`}
+                  onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
+                  className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 transition-colors active:scale-95"
                 >
-                  <UserAvatar user={currentUser} className="h-8 w-8" textClass="text-xs" />
-                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-200 max-w-[100px] truncate hidden md:block">{currentUser.username}</span>
-                  <ChevronDown className={`h-3 w-3 text-gray-400 transition-transform duration-200 ${isProfileMenuOpen ? 'rotate-180 text-[#00B291]' : ''}`} />
+                  <Menu className="h-5 w-5" />
+                </button>
+                  <h1 className="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white leading-none">
+                    Campus<span className="text-[#00B291] dark:text-[#00F5C8]">Mate</span>
+                  </h1>
+              </div>
+
+              <div className="flex items-center gap-2 md:gap-4">
+                <button 
+                  onClick={() => setIsDarkMode(!isDarkMode)} 
+                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-[#1a1a1a] text-gray-500 dark:text-gray-400 transition-colors active:scale-95 active:rotate-45"
+                  title="Toggle Theme"
+                >
+                  {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                 </button>
 
-                {isProfileMenuOpen && (
-                  <div onClick={(e) => e.stopPropagation()} className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl shadow-gray-200/50 dark:shadow-black/50 overflow-hidden animate-scale-in origin-top-right cursor-default ring-1 ring-black/5">
-                    <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-white/5 flex items-center gap-3">
-                      <UserAvatar user={currentUser} className="h-10 w-10" textClass="text-lg" />
-                      <div className="overflow-hidden">
-                        <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{currentUser.username}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{currentUser.email || 'Your Account'}</p>
+                <div className="h-6 w-px bg-gray-200 dark:bg-gray-800 mx-1"></div>
+
+                {currentUser ? (
+                  <div className="relative z-30">
+                    <button 
+                      onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)} 
+                      className={`flex items-center gap-2 pl-1 pr-3 py-1 rounded-full border transition-all duration-200 ${isProfileMenuOpen ? 'bg-[#00B291]/10 border-[#00B291] dark:border-[#00F5C8] shadow-sm' : 'bg-transparent border-transparent hover:bg-gray-100 dark:hover:bg-[#1a1a1a]'}`}
+                    >
+                      <UserAvatar user={currentUser} className="h-8 w-8" textClass="text-xs" />
+                      <span className="text-sm font-semibold text-gray-700 dark:text-gray-200 max-w-[100px] truncate hidden md:block">{currentUser.username}</span>
+                      <ChevronDown className={`h-3 w-3 text-gray-400 transition-transform duration-200 ${isProfileMenuOpen ? 'rotate-180 text-[#00B291]' : ''}`} />
+                    </button>
+
+                    {isProfileMenuOpen && (
+                      <div onClick={(e) => e.stopPropagation()} className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl shadow-gray-200/50 dark:shadow-black/50 overflow-hidden animate-scale-in origin-top-right cursor-default ring-1 ring-black/5">
+                        <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-white/5 flex items-center gap-3">
+                          <UserAvatar user={currentUser} className="h-10 w-10" textClass="text-lg" />
+                          <div className="overflow-hidden">
+                            <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{currentUser.username}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{currentUser.email || 'Your Account'}</p>
+                          </div>
+                        </div>
+                        <div className="p-2 space-y-1">
+                          <button onClick={() => { setActiveModal('profile'); setIsProfileMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#202020] rounded-xl transition-colors text-left"><div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"><UserCircle className="h-4 w-4" /></div>My Profile</button>
+                          <button onClick={() => { setActiveModal('settings'); setIsProfileMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#202020] rounded-xl transition-colors text-left"><div className="p-1.5 rounded-lg bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400"><Settings className="h-4 w-4" /></div>Settings</button>
+                          <button onClick={() => { setActiveModal('help'); setIsProfileMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#202020] rounded-xl transition-colors text-left"><div className="p-1.5 rounded-lg bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400"><HelpCircle className="h-4 w-4" /></div>Help & Support</button>
+                        </div>
+                        <div className="p-2 border-t border-gray-100 dark:border-gray-800">
+                          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-colors text-left"><div className="p-1.5 rounded-lg bg-red-50 dark:bg-red-900/10 text-red-500"><LogOut className="h-4 w-4" /></div>Sign Out</button>
+                        </div>
                       </div>
-                    </div>
-                    <div className="p-2 space-y-1">
-                      <button onClick={() => { setActiveModal('profile'); setIsProfileMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#202020] rounded-xl transition-colors text-left"><div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"><UserCircle className="h-4 w-4" /></div>My Profile</button>
-                      <button onClick={() => { setActiveModal('settings'); setIsProfileMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#202020] rounded-xl transition-colors text-left"><div className="p-1.5 rounded-lg bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400"><Settings className="h-4 w-4" /></div>Settings</button>
-                      <button onClick={() => { setActiveModal('help'); setIsProfileMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#202020] rounded-xl transition-colors text-left"><div className="p-1.5 rounded-lg bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400"><HelpCircle className="h-4 w-4" /></div>Help & Support</button>
-                    </div>
-                    <div className="p-2 border-t border-gray-100 dark:border-gray-800">
-                      <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-colors text-left"><div className="p-1.5 rounded-lg bg-red-50 dark:bg-red-900/10 text-red-500"><LogOut className="h-4 w-4" /></div>Sign Out</button>
-                    </div>
+                    )}
                   </div>
+                ) : (
+                  <button onClick={() => setIsAuthModalOpen(true)} className="flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-[#00B291] to-[#00F5C8] text-white hover:opacity-90 transition-all transform hover:scale-105 shadow-lg shadow-[#00B291]/20 text-sm font-bold active:scale-95">
+                    <LogIn className="h-4 w-4" /><span className="hidden sm:inline">Login</span>
+                  </button>
                 )}
               </div>
-            ) : (
-              <button onClick={() => setIsAuthModalOpen(true)} className="flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-[#00B291] to-[#00F5C8] text-white hover:opacity-90 transition-all transform hover:scale-105 shadow-lg shadow-[#00B291]/20 text-sm font-bold active:scale-95">
-                <LogIn className="h-4 w-4" /><span className="hidden sm:inline">Login</span>
-              </button>
-            )}
-          </div>
-        </header>
+            </header>
 
-        <ChatArea messages={getCurrentMessages()} isLoading={isLoading} suggestionText={faqs[currentFaqIndex]} currentUser={currentUser} />
-        <ChatInput inputMessage={inputMessage} setInputMessage={setInputMessage} handleSendMessage={handleSendWrapper} handleKeyPress={handleKeyPress} isLoading={isLoading} isTyping={isTyping} />
-      </main>
+            <ChatArea messages={getCurrentMessages()} isLoading={isLoading} suggestionText={faqs[currentFaqIndex]} currentUser={currentUser} />
+            <ChatInput inputMessage={inputMessage} setInputMessage={setInputMessage} handleSendMessage={handleSendWrapper} handleKeyPress={handleKeyPress} isLoading={isLoading} isTyping={isTyping} />
+          </main>
 
-      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} onLogin={login} />
-      <div className="relative z-50">{renderModal()}</div>
-    </div>
+          <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} onLogin={login} />
+          <div className="relative z-50">{renderModal()}</div>
+        </div>
+    </BackendLoader>
   );
 };
 
