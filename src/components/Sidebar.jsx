@@ -150,7 +150,7 @@ const Sidebar = ({
                   </span>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-bold text-gray-800 dark:text-gray-100 truncate max-w-[120px]">
-                      {currentUser ? currentUser.username : 'Student'}
+                      {currentUser ? currentUser.username : 'Zara'}
                     </span>
                   </div>
                 </div>
@@ -201,9 +201,9 @@ const Sidebar = ({
           <div className="h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-800 to-transparent mx-5 shrink-0" />
 
           {/* Content Area - UPDATED: 
-             1. Removed 'overflow-y-auto' from base class (so it doesn't trap scroll on mobile).
-             2. Added 'md:overflow-y-auto' (re-enables internal scrolling ONLY on desktop).
-             3. 'overflow-visible' allows content to expand naturally on mobile.
+              1. Removed 'overflow-y-auto' from base class (so it doesn't trap scroll on mobile).
+              2. Added 'md:overflow-y-auto' (re-enables internal scrolling ONLY on desktop).
+              3. 'overflow-visible' allows content to expand naturally on mobile.
           */}
           <div className="flex-1 p-5 space-y-5 overflow-visible md:overflow-y-auto md:custom-scrollbar">
             {sidebarMode === 'tools' && (
@@ -238,8 +238,8 @@ const Sidebar = ({
                   {updates.map((update) => (
                     <div key={update.id} onClick={() => window.open(update.link, '_blank')} className="p-2.5 rounded-lg bg-gray-50 dark:bg-[#202020] hover:bg-orange-50 dark:hover:bg-orange-900/10 cursor-pointer border border-transparent hover:border-orange-100 dark:hover:border-orange-900/30 transition-all group">
                       <div className="flex justify-between items-start mb-1">
-                         <span className="text-[10px] font-bold text-orange-500 bg-orange-100 dark:bg-orange-900/30 px-1.5 py-0.5 rounded">NEW</span>
-                         <span className="text-[10px] text-gray-400">{update.date}</span>
+                          <span className="text-[10px] font-bold text-orange-500 bg-orange-100 dark:bg-orange-900/30 px-1.5 py-0.5 rounded">NEW</span>
+                          <span className="text-[10px] text-gray-400">{update.date}</span>
                       </div>
                       <p className="text-xs font-medium text-gray-700 dark:text-gray-300 group-hover:text-orange-600 dark:group-hover:text-orange-400 line-clamp-2">{update.title}</p>
                     </div>
@@ -314,10 +314,10 @@ const Sidebar = ({
                 <div className="p-4 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/10 border border-amber-100 dark:border-amber-900/30 relative overflow-hidden group">
                    <div className="absolute -top-2 -right-2 p-2 opacity-10 group-hover:opacity-20 transition-opacity"><Clock className="h-20 w-20 text-yellow-500"/></div>
                    <div className="flex items-center gap-2 mb-2 relative z-10">
-                      <div className="p-1 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400">
-                        <Sparkles className="h-3 w-3 fill-current" />
-                      </div>
-                      <span className="text-[10px] font-bold text-amber-700 dark:text-amber-500 uppercase tracking-wider">Daily Tip</span>
+                     <div className="p-1 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400">
+                       <Sparkles className="h-3 w-3 fill-current" />
+                     </div>
+                     <span className="text-[10px] font-bold text-amber-700 dark:text-amber-500 uppercase tracking-wider">Daily Tip</span>
                    </div>
                    <p className="text-xs text-gray-700 dark:text-gray-300 font-medium leading-relaxed relative z-10">
                      "The central library has extended hours this week. Great for group studies!"

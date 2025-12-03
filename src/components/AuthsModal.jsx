@@ -80,7 +80,6 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
             }
         } else {
             // Login Errors
-            // If backend says "invalid credentials", "user not found", etc.
             if (lowerError.includes('found') || lowerError.includes('invalid') || lowerError.includes('match')) {
                 serverError = 'No account found. Please Register.';
             }
@@ -148,7 +147,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                   value={username} 
                   onChange={(e) => setUsername(e.target.value)} 
                   className="w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-4 focus:ring-[#00B291]/10 focus:border-[#00B291] outline-none transition-all dark:text-white placeholder:text-gray-400 font-medium text-sm" 
-                  placeholder="Enter Username" 
+                  placeholder="e.g  'Zara'" 
                 />
               </div>
             </div>
