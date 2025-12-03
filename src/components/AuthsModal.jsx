@@ -12,7 +12,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
   // State Variables
   const [username, setUsername] = useState(''); 
   const [password, setPassword] = useState('');
-  const [employeeId, setEmployeeId] = useState(''); // New state for Employee ID
+  const [employeeId, setEmployeeId] = useState(''); 
   
   const [error, setError] = useState(''); 
   const [loading, setLoading] = useState(false);
@@ -40,7 +40,6 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
         return;
     }
 
-    // Specific validation for Teacher Registration
     if (role === 'teacher' && isRegistering && !employeeId.trim()) {
         setError('Please enter your Employee ID.');
         setLoading(false);
@@ -56,7 +55,6 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
         username: username.trim(), 
         password,
         role: role === 'teacher' ? 'Teacher' : 'Student',
-        // Include Employee ID only for Teacher Registration
         ...(role === 'teacher' && isRegistering ? { employeeId: employeeId.trim() } : {})
       };
 
@@ -69,7 +67,26 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Authentication failed');
+        // --- CUSTOM ERROR MESSAGE LOGIC ---
+        let serverError = data.error || 'Authentication failed';
+        let lowerError = serverError.toLowerCase();
+
+        if (isRegistering) {
+            // Registration Errors
+            if (lowerError.includes('exist') || lowerError.includes('duplicate')) {
+                serverError = 'Account already exists. Please Login.';
+            } else if (lowerError.includes('username')) {
+                serverError = 'Try changing username.';
+            }
+        } else {
+            // Login Errors
+            // If backend says "invalid credentials", "user not found", etc.
+            if (lowerError.includes('found') || lowerError.includes('invalid') || lowerError.includes('match')) {
+                serverError = 'No account found. Please Register.';
+            }
+        }
+        
+        throw new Error(serverError);
       }
 
       onLogin(data.user);
@@ -169,7 +186,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
             )}
 
             <button type="submit" disabled={loading} className={`w-full mt-4 py-4 rounded-xl text-white font-bold text-sm tracking-wide transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg hover:shadow-xl ${role === 'student' ? 'bg-gradient-to-r from-[#00B291] to-[#009e80] shadow-[#00B291]/25' : 'bg-gradient-to-r from-blue-500 to-blue-600 shadow-blue-500/25'}`}>
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>{isRegistering ? 'Create Account' : 'Sign In'} <ChevronRight className="w-4 h-4" /></>}
+              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>{isRegistering ? 'Register' : 'Login'} <ChevronRight className="w-4 h-4" /></>}
             </button>
           </form>
         </div>
@@ -178,7 +195,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
           <p className="text-xs text-gray-500 dark:text-gray-400">
             {isRegistering ? 'Already have an account? ' : "Don't have an account? "}
             <button onClick={() => { setIsRegistering(!isRegistering); setError(''); }} className={`font-bold hover:underline ml-1 uppercase text-[10px] tracking-wider transition-colors ${role === 'student' ? 'text-[#00B291]' : 'text-blue-500'}`}>
-              {isRegistering ? 'Sign In' : 'Sign Up'}
+              {isRegistering ? 'Login' : 'Register'}
             </button>
           </p>
         </div>
