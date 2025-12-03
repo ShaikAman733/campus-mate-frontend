@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Zap, Database, Globe, CheckCircle2, Lock, AlertTriangle } from 'lucide-react';
+import { Shield, Zap, Database, Globe, CheckCircle2, Lock, AlertTriangle, Loader2 } from 'lucide-react';
 
 const BackendLoader = ({ children }) => {
   const [isReady, setIsReady] = useState(false);
@@ -7,7 +7,7 @@ const BackendLoader = ({ children }) => {
   const [decodedText, setDecodedText] = useState("INIT_SYSTEM");
   const [activeStage, setActiveStage] = useState(0);
   const [isExiting, setIsExiting] = useState(false);
-  const [showBypass, setShowBypass] = useState(false);
+  const [showLongWaitMsg, setShowLongWaitMsg] = useState(false);
 
   const stages = [
     { id: 1, text: "Neural Network", icon: <Zap size={14} /> },
@@ -50,15 +50,15 @@ const BackendLoader = ({ children }) => {
       });
     }, 100);
 
-    const bypassTimer = setTimeout(() => {
-        setShowBypass(true);
+    // Timer to show the "Just a moment" message if server is sleeping
+    const longWaitTimer = setTimeout(() => {
+        setShowLongWaitMsg(true);
     }, 8000);
 
-    // --- UPDATED SERVER CHECK LOGIC ---
+    // --- SERVER CHECK LOGIC ---
     const checkServer = async () => {
       try {
         // 1. WAKE UP PYTHON DIRECTLY (Fire and Forget)
-        // We use 'no-cors' so it doesn't fail on CORS errors, we just want the request to reach the server.
         fetch('https://campus-bot-python.onrender.com', { mode: 'no-cors' }).catch(() => {
             console.log("Pinging Python server to wake it up...");
         });
@@ -69,11 +69,10 @@ const BackendLoader = ({ children }) => {
         if (response.ok) {
           triggerExit();
         } else {
-          console.log("Node server not ready yet (likely waiting for Python)... retrying.");
+          console.log("Node server not ready yet... retrying.");
           setTimeout(checkServer, 2000);
         }
       } catch (error) {
-          // Network error means server is likely completely down/booting
           setTimeout(checkServer, 2000);
       }
     };
@@ -90,7 +89,7 @@ const BackendLoader = ({ children }) => {
     return () => {
       clearInterval(progressInterval);
       clearInterval(shuffleInterval);
-      clearTimeout(bypassTimer);
+      clearTimeout(longWaitTimer);
     };
   }, []);
 
@@ -101,19 +100,12 @@ const BackendLoader = ({ children }) => {
       <div className="holo-floor"></div>
       <div className="particles"></div>
 
-      {showBypass && !isExiting && (
-        <button 
-            onClick={() => {
-                setProgress(100);
-                setActiveStage(5);
-                setIsExiting(true);
-                setTimeout(() => setIsReady(true), 1000);
-            }}
-            className="bypass-btn"
-        >
-            <AlertTriangle size={16} />
-            <span>SERVER UNRESPONSIVE: FORCE ENTRY</span>
-        </button>
+      {/* REPLACED BUTTON WITH STATUS MESSAGE */}
+      {showLongWaitMsg && !isExiting && (
+        <div className="wait-message fade-in">
+            <Loader2 size={16} className="spin-icon" />
+            <span>ESTABLISHING SECURE LINK... JUST A MOMENT</span>
+        </div>
       )}
 
       <div className="interface-container">
@@ -171,15 +163,22 @@ const BackendLoader = ({ children }) => {
           50% { opacity: 1; transform: scale(4); filter: brightness(20); }
           100% { opacity: 0; transform: scale(10); display: none; }
         }
-        .bypass-btn {
+        
+        /* NEW STYLES FOR WAIT MESSAGE */
+        .wait-message {
             position: absolute; bottom: 15%; z-index: 100; display: flex; align-items: center; gap: 10px;
-            background: rgba(255, 0, 50, 0.1); border: 1px solid #ff0033; color: #ff0033;
-            padding: 12px 24px; border-radius: 4px; cursor: pointer; font-family: inherit;
-            letter-spacing: 2px; font-weight: bold; font-size: 12px; backdrop-filter: blur(4px);
-            transition: all 0.3s; animation: fadeIn 1s ease-in; text-shadow: 0 0 5px rgba(255, 0, 50, 0.5);
+            color: rgba(0, 210, 255, 0.8);
+            padding: 8px 16px; border-radius: 4px; 
+            font-family: inherit; letter-spacing: 2px; font-size: 12px; font-weight: 600;
+            text-shadow: 0 0 5px rgba(0, 210, 255, 0.5);
+            background: rgba(0, 10, 20, 0.5);
+            border: 1px solid rgba(0, 210, 255, 0.1);
         }
-        .bypass-btn:hover { background: rgba(255, 0, 50, 0.3); box-shadow: 0 0 20px rgba(255, 0, 50, 0.4); transform: translateY(-2px); }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .fade-in { animation: fadeIn 1s ease-in forwards; }
+        .spin-icon { animation: spin 2s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
         .holo-floor {
           position: absolute; bottom: -50%; left: -50%; width: 200%; height: 100%;
           background-image: linear-gradient(rgba(0, 210, 255, 0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 210, 255, 0.3) 1px, transparent 1px);
@@ -225,7 +224,7 @@ const BackendLoader = ({ children }) => {
           .title-section { margin-bottom: 10px; text-align: left; }
           .modules-list { padding: 10px; max-width: 300px; }
           .cyber-title { font-size: 24px; margin-bottom: 5px; }
-          .bypass-btn { bottom: 5px; right: 5px; }
+          .wait-message { bottom: 5px; right: 5px; }
         }
         @media (max-width: 380px) { .cyber-title { font-size: 28px; } .module-text { font-size: 13px; } .module-status { font-size: 9px; } }
       `}</style>
