@@ -1,6 +1,6 @@
 // src/App.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import BackendLoader from './components/BackendLoader'; // ✅ Imported here
+import BackendLoader from './components/BackendLoader'; 
 import { 
   Menu, Moon, Sun, LogIn, LogOut, User, 
   ChevronDown, Settings, HelpCircle, UserCircle 
@@ -64,7 +64,12 @@ const useAuth = () => {
 
   useEffect(() => {
     const storedUser = localStorage.getItem('campusMateUser');
-    if (storedUser) setCurrentUser(JSON.parse(storedUser));
+    if (storedUser) {
+        setCurrentUser(JSON.parse(storedUser));
+    } else {
+        // Force open modal if no user found on load
+        setIsAuthModalOpen(true);
+    }
   }, []);
 
   const login = useCallback((userData) => {
@@ -94,6 +99,8 @@ const useAuth = () => {
     setCurrentUser(null);
     localStorage.removeItem('campusMateUser');
     toast.success('Logged out successfully');
+    // Force open modal immediately after logout
+    setIsAuthModalOpen(true);
   }, []);
 
   return { currentUser, isAuthModalOpen, setIsAuthModalOpen, login, logout };
@@ -444,7 +451,7 @@ const App = () => {
                     </button>
 
                     {isProfileMenuOpen && (
-                      <div onClick={(e) => e.stopPropagation()} className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl shadow-gray-200/50 dark:shadow-black/50 overflow-hidden animate-scale-in origin-top-right cursor-default ring-1 ring-black/5">
+                      <div onClick={(e) => e.stopPropagation()} className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl shadow-gray-200/50 dark:shadow-black/5 overflow-hidden animate-scale-in origin-top-right cursor-default ring-1 ring-black/5">
                         <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-white/5 flex items-center gap-3">
                           <UserAvatar user={currentUser} className="h-10 w-10" textClass="text-lg" />
                           <div className="overflow-hidden">
@@ -475,7 +482,16 @@ const App = () => {
             <ChatInput inputMessage={inputMessage} setInputMessage={setInputMessage} handleSendMessage={handleSendWrapper} handleKeyPress={handleKeyPress} isLoading={isLoading} isTyping={isTyping} />
           </main>
 
-          <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} onLogin={login} />
+          <AuthModal 
+            isOpen={isAuthModalOpen} 
+            onClose={() => {
+                // Prevent closing if no user is logged in
+                if (currentUser) setIsAuthModalOpen(false);
+            }} 
+            onLogin={login} 
+            // New Prop: Only allows showing the 'X' button if a user is logged in
+            canClose={!!currentUser}
+          />
           <div className="relative z-50">{renderModal()}</div>
         </div>
     </BackendLoader>

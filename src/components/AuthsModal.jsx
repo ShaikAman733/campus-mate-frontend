@@ -1,11 +1,11 @@
-// src/components/AuthModal.jsx
+// src/components/AuthsModal.jsx
 import React, { useState, useEffect } from 'react';
 import { 
   X, User, Lock, ChevronRight, GraduationCap, Briefcase, 
   Loader2, AlertCircle, IdCard
 } from 'lucide-react';
 
-const AuthModal = ({ isOpen, onClose, onLogin }) => {
+const AuthModal = ({ isOpen, onClose, onLogin, canClose = true }) => {
   const [isRegistering, setIsRegistering] = useState(false);
   const [role, setRole] = useState('student');
   
@@ -89,6 +89,8 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
       }
 
       onLogin(data.user);
+      // We don't manually call onClose() here because the parent usually handles 
+      // closing via state updates, but we call it just in case logic varies.
       onClose();
     } catch (err) {
       setError(err.message);
@@ -104,10 +106,12 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
         {/* Background Glow */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-[#00B291] opacity-10 blur-[100px] pointer-events-none"></div>
 
-        {/* Close Button */}
-        <button onClick={onClose} className="absolute top-5 right-5 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-all z-20 active:scale-90">
-          <X className="w-5 h-5" />
-        </button>
+        {/* Close Button - HIDDEN if canClose is false */}
+        {canClose && (
+          <button onClick={onClose} className="absolute top-5 right-5 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-all z-20 active:scale-90">
+            <X className="w-5 h-5" />
+          </button>
+        )}
 
         {/* Header */}
         <div className="px-8 pt-10 pb-4 relative z-10 text-center">
@@ -162,7 +166,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                   value={password} 
                   onChange={(e) => setPassword(e.target.value)} 
                   className="w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-4 focus:ring-[#00B291]/10 focus:border-[#00B291] outline-none transition-all dark:text-white placeholder:text-gray-400 font-medium text-sm" 
-                  placeholder="••••••••" 
+                  placeholder="Enter your password" 
                 />
               </div>
             </div>
