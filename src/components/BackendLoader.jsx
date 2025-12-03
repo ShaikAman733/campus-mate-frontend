@@ -1,175 +1,138 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Shield, Zap, Database, Globe, Cpu, Activity, Radio, Hexagon, Scan, Wifi, Server, Code } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Shield, Zap, Database, Globe, CheckCircle2, Lock } from 'lucide-react';
 
 const BackendLoader = ({ children }) => {
   const [isReady, setIsReady] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [decodedText, setDecodedText] = useState("INITIALIZING");
+  const [decodedText, setDecodedText] = useState("INIT_SYSTEM");
   const [activeStage, setActiveStage] = useState(0);
   const [isExiting, setIsExiting] = useState(false);
-  
-  // Physics State for Smooth Parallax
-  const [springPos, setSpringPos] = useState({ x: 0, y: 0 });
-  const targetPos = useRef({ x: 0, y: 0 });
-  const currentPos = useRef({ x: 0, y: 0 });
 
+  // The checklist of "systems" coming online
   const stages = [
-    { id: 1, text: "UPLINK_ESTABLISHED", sub: "Handshake verified", icon: <Wifi size={16} /> },
-    { id: 2, text: "KERNEL_INJECTION", sub: "Loading modules", icon: <Code size={16} /> },
-    { id: 3, text: "ENCRYPTION_LAYER", sub: "Securing connection", icon: <Shield size={16} /> },
-    { id: 4, text: "DATA_SHARDING", sub: "Fetching assets", icon: <Database size={16} /> },
-    { id: 5, text: "HUD_RENDERING", sub: "Finalizing UI", icon: <Cpu size={16} /> },
+    { id: 1, text: "Neural Network", icon: <Zap size={14} /> },
+    { id: 2, text: "Database Shards", icon: <Database size={14} /> },
+    { id: 3, text: "Security Protocols", icon: <Lock size={14} /> },
+    { id: 4, text: "Global CDN", icon: <Globe size={14} /> },
+    { id: 5, text: "User Interface", icon: <Shield size={14} /> },
   ];
 
-  // --- 1. DECRYPTION ENGINE ---
+  // Matrix-style Text Decryption Effect
   const originalText = "CAMPUS MATE";
-  useEffect(() => {
+  const shuffleText = () => {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890@#$%&";
     let iterations = 0;
     const interval = setInterval(() => {
       setDecodedText(prev => 
         originalText.split("").map((letter, index) => {
           if (index < iterations) return originalText[index];
-          const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890@#&§";
           return chars[Math.floor(Math.random() * chars.length)];
         }).join("")
       );
+      
       if (iterations >= originalText.length) clearInterval(interval);
-      iterations += 1 / 4;
+      iterations += 1 / 3; // Speed of decryption
     }, 30);
-    return () => clearInterval(interval);
-  }, []);
+  };
 
-  // --- 2. PROGRESS LOGIC ---
   useEffect(() => {
+    // Trigger text shuffle on mount and every 10 seconds
+    shuffleText();
+    const shuffleInterval = setInterval(shuffleText, 10000);
+
+    // 1. Progress & Stage Logic
     const progressInterval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 98) return 98; 
+        
+        // Advance stages based on progress
         const stageIndex = Math.floor((prev / 100) * stages.length);
         setActiveStage(stageIndex);
-        const stallChance = Math.random();
-        const speed = prev < 20 ? 0.8 : prev < 60 ? 0.4 : (stallChance > 0.8 ? 0 : 0.2); 
+
+        // Variable speed: Fast start, slow middle, slow end
+        const speed = prev < 30 ? 0.8 : prev < 70 ? 0.4 : 0.1; 
         return prev + speed;
       });
     }, 100);
 
+    // 2. Real Server Check (Simulated for this demo, keeping your logic structure)
     const checkServer = async () => {
       try {
+        // Keeping your original endpoint
         const response = await fetch('https://campus-bot-node.onrender.com/api/lostfound');
         if (response.ok) {
-          setProgress(100);
-          setActiveStage(5);
-          setIsExiting(true);
-          setTimeout(() => setIsReady(true), 1500);
+          triggerExit();
         } else {
-          setTimeout(checkServer, 2000);
+          // Fallback simulation if server is down so you can see the UI
+          // Remove this else block in production if you want strictly server-dependent loading
+           setTimeout(checkServer, 2000);
         }
       } catch (error) {
-        setTimeout(checkServer, 2000);
+         setTimeout(checkServer, 2000);
       }
     };
+
+    const triggerExit = () => {
+      setProgress(100);
+      setActiveStage(5);
+      setIsExiting(true);
+      setTimeout(() => setIsReady(true), 1500);
+    };
+
     checkServer();
-    return () => clearInterval(progressInterval);
-  }, []);
 
-  // --- 3. PHYSICS ENGINE ---
-  useEffect(() => {
-    let animationFrameId;
-    const renderLoop = () => {
-      currentPos.current.x += (targetPos.current.x - currentPos.current.x) * 0.08;
-      currentPos.current.y += (targetPos.current.y - currentPos.current.y) * 0.08;
-      setSpringPos({ x: currentPos.current.x, y: currentPos.current.y });
-      animationFrameId = requestAnimationFrame(renderLoop);
+    return () => {
+      clearInterval(progressInterval);
+      clearInterval(shuffleInterval);
     };
-    renderLoop();
-    return () => cancelAnimationFrame(animationFrameId);
   }, []);
-
-  const handleMouseMove = (e) => {
-    if (isExiting) return;
-    const { innerWidth, innerHeight } = window;
-    targetPos.current = {
-      x: (e.clientX - innerWidth / 2) / 35,
-      y: (e.clientY - innerHeight / 2) / 35
-    };
-  };
 
   if (isReady) return <>{children}</>;
 
   return (
-    <div 
-      className={`titan-loader ${isExiting ? 'warp-out' : ''}`} 
-      onMouseMove={handleMouseMove}
-    >
-      {/* --- CINEMATIC BACKGROUND --- */}
-      <div className="aurora-bg"></div>
-      <div className="grid-plane"></div>
-      <div className="crt-overlay"></div>
-      <div className="vignette"></div>
+    <div className={`quantum-loader ${isExiting ? 'warp-speed' : ''}`}>
+      
+      {/* 3D Holographic Floor */}
+      <div className="holo-floor"></div>
+      
+      {/* Ambient Particles */}
+      <div className="particles"></div>
 
-      {/* --- 3D INTERFACE RIG --- */}
-      <div 
-        className="interface-rig"
-        style={{ transform: `rotateX(${-springPos.y}deg) rotateY(${springPos.x}deg)` }}
-      >
+      <div className="interface-container">
         
-        {/* HEADER DECK */}
-        <div className="header-deck">
-           <div className="deck-item left">
-             <Activity size={12} className="icon-pulse mr-2"/> 
-             <span>SYS_OPTIMAL</span>
-           </div>
-           <div className="deck-center">CM-OS v2.4</div>
-           <div className="deck-item right text-dim">
-             PING: <span className="text-neon">{Math.floor(Math.random() * 20 + 10)}ms</span>
-           </div>
-        </div>
-
-        {/* --- GYRO REACTOR CORE --- */}
-        <div className="reactor-container">
-          <div className="gyro-outer"></div>
-          <div className="gyro-mid"></div>
-          <div className="gyro-inner">
-             <Hexagon size={40} className="core-hex"/>
+        {/* THE QUANTUM GYROSCOPE */}
+        <div className="gyro-scene">
+          <div className="gyro-ring ring-1"></div>
+          <div className="gyro-ring ring-2"></div>
+          <div className="gyro-ring ring-3"></div>
+          <div className="gyro-core">
+            <div className="core-inner"></div>
           </div>
-          <div className="particle-cloud"></div>
         </div>
 
-        {/* MAIN DISPLAY */}
-        <div className="main-display">
+        {/* Decrypting Title */}
+        <div className="title-section">
           <h1 className="cyber-title" data-text={decodedText}>{decodedText}</h1>
-          
-          <div className="loading-sector">
-             <div className="scan-line-x"></div>
-             <div className="loading-bar-track">
-               <div className="loading-bar-fill" style={{ width: `${progress}%` }}></div>
-             </div>
-             <div className="loading-metrics">
-               <span>LOADING ASSETS</span>
-               <span className="nums">{Math.floor(progress)}%</span>
-             </div>
+          <div className="status-bar">
+            <div className="status-fill" style={{ width: `${progress}%` }}></div>
           </div>
+          <div className="percentage-text">SYSTEM INTEGRITY: {Math.floor(progress)}%</div>
         </div>
 
-        {/* DATA GRID CARDS */}
-        <div className="data-grid">
+        {/* System Checklist Modules */}
+        <div className="modules-list">
           {stages.map((stage, index) => (
             <div 
               key={stage.id} 
-              className={`holo-card ${index === activeStage ? 'active' : ''} ${index < activeStage ? 'done' : ''}`}
+              className={`module-item ${index <= activeStage ? 'active' : 'pending'} ${index === activeStage ? 'pulsing' : ''}`}
             >
-              <div className="card-status-line"></div>
-              <div className="card-body">
-                <div className="card-icon-box">
-                  {index < activeStage ? <Shield size={14} className="text-neon"/> : 
-                   index === activeStage ? <Radio size={14} className="text-warn animate-spin-slow"/> : 
-                   stage.icon}
-                </div>
-                <div className="card-text">
-                  <div className="card-header">{stage.text}</div>
-                  <div className="card-sub">{stage.sub}</div>
-                </div>
+              <div className="module-icon">
+                {index < activeStage ? <CheckCircle2 size={14} color="#00ff9d" /> : stage.icon}
               </div>
-              {index === activeStage && <div className="scanning-bar"></div>}
+              <span className="module-text">{stage.text}</span>
+              <div className="module-status">
+                {index < activeStage ? 'ONLINE' : index === activeStage ? 'LOADING...' : 'WAITING'}
+              </div>
             </div>
           ))}
         </div>
@@ -177,245 +140,222 @@ const BackendLoader = ({ children }) => {
       </div>
 
       <style>{`
-        /* --- CORE --- */
-        .titan-loader {
+        /* --- CONTAINER & EXIT FX --- */
+        .quantum-loader {
           position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-          background: #030305; color: #e0e0e0;
+          background: #030305;
+          color: #fff;
           display: flex; align-items: center; justify-content: center;
-          font-family: 'Rajdhani', 'Segoe UI', monospace;
-          overflow: hidden; perspective: 1200px;
-          cursor: crosshair; z-index: 9999;
+          font-family: 'Rajdhani', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+          overflow: hidden;
+          perspective: 1000px;
+          z-index: 9999;
+          /* Handle mobile viewport quirks */
+          min-height: -webkit-fill-available;
         }
 
-        /* --- BACKGROUND FX --- */
-        .aurora-bg {
-          position: absolute; width: 150%; height: 150%;
-          background: radial-gradient(circle at 50% 50%, rgba(20, 30, 60, 0.4) 0%, #000 70%),
-                      conic-gradient(from 0deg at 50% 50%, #000 0deg, rgba(0, 210, 255, 0.05) 120deg, #000 240deg);
-          animation: auroraSpin 30s linear infinite;
+        .warp-speed {
+          animation: warpOut 1.5s cubic-bezier(0.7, 0, 0.2, 1) forwards;
+        }
+        
+        .warp-speed .gyro-scene {
+          animation: coreImplode 0.5s forwards;
+        }
+
+        @keyframes warpOut {
+          0% { opacity: 1; transform: scale(1); }
+          50% { opacity: 1; transform: scale(4); filter: brightness(20); }
+          100% { opacity: 0; transform: scale(10); display: none; }
+        }
+
+        /* --- HOLOGRAPHIC FLOOR --- */
+        .holo-floor {
+          position: absolute; bottom: -50%; left: -50%; width: 200%; height: 100%;
+          background-image: 
+            linear-gradient(rgba(0, 210, 255, 0.3) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 210, 255, 0.3) 1px, transparent 1px);
+          background-size: 50px 50px;
+          transform: rotateX(70deg);
+          animation: floorMove 3s linear infinite;
+          mask-image: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 60%);
           z-index: 1;
+          pointer-events: none;
         }
 
-        .grid-plane {
-          position: absolute; bottom: -50%; width: 300%; height: 100%;
-          background: linear-gradient(0deg, transparent 0%, rgba(0, 243, 255, 0.1) 100%),
-                      linear-gradient(90deg, rgba(0, 243, 255, 0.05) 1px, transparent 1px);
-          background-size: 100% 100%, 60px 60px;
-          transform: rotateX(80deg);
-          animation: gridMove 4s linear infinite;
-          z-index: 2;
+        @keyframes floorMove { from { background-position: 0 0; } to { background-position: 0 50px; } }
+
+        /* --- 3D GYROSCOPE --- */
+        .gyro-scene {
+          position: relative; 
+          /* Responsive sizing using clamp */
+          width: clamp(120px, 25vw, 180px);
+          height: clamp(120px, 25vw, 180px);
+          transform-style: preserve-3d;
+          animation: float 6s ease-in-out infinite;
+          /* Responsive margin */
+          margin-bottom: clamp(20px, 5vh, 40px);
         }
 
-        .crt-overlay {
-          position: absolute; inset: 0;
-          background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
-                      linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-          background-size: 100% 2px, 3px 100%;
-          pointer-events: none; z-index: 20;
+        .gyro-ring {
+          position: absolute; width: 100%; height: 100%;
+          border-radius: 50%;
+          border: 2px solid rgba(0, 210, 255, 0.1);
+          box-shadow: 0 0 15px rgba(0, 210, 255, 0.1);
         }
 
-        .vignette {
-          position: absolute; inset: 0;
-          background: radial-gradient(circle, transparent 50%, #000 130%);
-          z-index: 15;
+        .ring-1 {
+          border-top: 2px solid #00d2ff;
+          border-bottom: 2px solid #00d2ff;
+          animation: rotate1 4s linear infinite;
         }
 
-        /* --- INTERFACE RIG --- */
-        .interface-rig {
+        .ring-2 {
+          width: 80%; height: 80%; top: 10%; left: 10%;
+          border: 2px solid rgba(255, 0, 255, 0.1);
+          border-left: 2px solid #ff00ff;
+          border-right: 2px solid #ff00ff;
+          animation: rotate2 5s linear infinite;
+        }
+
+        .ring-3 {
+          width: 60%; height: 60%; top: 20%; left: 20%;
+          border: 2px solid rgba(0, 255, 157, 0.1);
+          border-top: 2px solid #00ff9d;
+          animation: rotate3 10s linear infinite;
+        }
+
+        .gyro-core {
+          position: absolute; top: 35%; left: 35%; width: 30%; height: 30%;
+          background: #00d2ff;
+          border-radius: 50%;
+          box-shadow: 0 0 30px #00d2ff;
+          animation: pulseCore 2s infinite;
+        }
+
+        @keyframes rotate1 { 0% { transform: rotateX(60deg) rotateY(0deg); } 100% { transform: rotateX(60deg) rotateY(360deg); } }
+        @keyframes rotate2 { 0% { transform: rotateX(-60deg) rotateY(0deg); } 100% { transform: rotateX(-60deg) rotateY(360deg); } }
+        @keyframes rotate3 { 0% { transform: rotateX(90deg) rotateZ(0deg); } 100% { transform: rotateX(90deg) rotateZ(360deg); } }
+        @keyframes pulseCore { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(0.8); opacity: 0.7; } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+        /* --- TYPOGRAPHY & HUD --- */
+        .interface-container {
           position: relative; z-index: 10;
           display: flex; flex-direction: column; align-items: center;
-          width: 90vw; max-width: 460px;
-          transform-style: preserve-3d;
+          width: 90%; 
+          max-width: 400px;
+          padding: 0 10px;
         }
 
-        /* --- HEADER --- */
-        .header-deck {
-          width: 100%; display: flex; justify-content: space-between;
-          padding: 0 10px 10px; border-bottom: 1px solid rgba(0, 243, 255, 0.2);
-          margin-bottom: 40px; font-size: 11px; letter-spacing: 2px;
-          text-transform: uppercase; color: rgba(0, 243, 255, 0.7);
-        }
-        .deck-item { display: flex; align-items: center; }
-
-        /* --- REACTOR CORE --- */
-        .reactor-container {
-          position: relative; width: 140px; height: 140px;
-          display: flex; justify-content: center; align-items: center;
-          margin-bottom: 40px; transform-style: preserve-3d;
-        }
-
-        .gyro-outer {
-          position: absolute; width: 100%; height: 100%;
-          border: 1px dashed rgba(0, 243, 255, 0.3);
-          border-radius: 50%;
-          border-top: 2px solid #00f3ff;
-          border-bottom: 2px solid #00f3ff;
-          animation: spin 8s linear infinite;
-        }
+        .title-section { text-align: center; width: 100%; margin-bottom: 30px; }
         
-        .gyro-mid {
-          position: absolute; width: 80%; height: 80%;
-          border-radius: 50%;
-          border: 1px solid rgba(188, 19, 254, 0.3);
-          border-left: 2px solid #bc13fe;
-          border-right: 2px solid #bc13fe;
-          transform: rotateX(60deg);
-          animation: spinRev 5s linear infinite;
-        }
-
-        .gyro-inner {
-          position: absolute; width: 50%; height: 50%;
-          border-radius: 50%;
-          border: 2px dotted #fff;
-          display: flex; align-items: center; justify-content: center;
-          transform: rotateY(60deg);
-          animation: spin 3s linear infinite;
-          background: radial-gradient(circle, rgba(0,243,255,0.1), transparent);
-          box-shadow: 0 0 20px rgba(0,243,255,0.2);
-        }
-
-        .core-hex { color: #fff; animation: pulse 2s infinite; filter: drop-shadow(0 0 5px #00f3ff); }
-
-        /* --- MAIN DISPLAY --- */
-        .main-display { width: 100%; text-align: center; margin-bottom: 25px; }
-
         .cyber-title {
-          font-size: 42px; font-weight: 800; color: #fff;
-          letter-spacing: 6px; margin: 0 0 15px 0;
-          text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
-          position: relative; display: inline-block;
-        }
-        
-        .loading-sector {
-          position: relative; width: 100%; padding: 0 10px;
+          /* Fluid font size */
+          font-size: clamp(24px, 8vw, 36px);
+          font-weight: 800; color: #fff;
+          letter-spacing: clamp(2px, 1vw, 4px);
+          margin: 0 0 15px 0;
+          text-shadow: 0 0 10px rgba(0, 210, 255, 0.5);
+          white-space: nowrap;
         }
 
-        .loading-bar-track {
-          width: 100%; height: 2px; background: rgba(255,255,255,0.1);
-          overflow: hidden; margin-bottom: 8px;
-        }
-        
-        .loading-bar-fill {
-          height: 100%; background: #00f3ff;
-          box-shadow: 0 0 15px #00f3ff;
+        .status-bar {
+          width: 100%; height: 4px; background: rgba(255,255,255,0.1);
+          border-radius: 2px; overflow: hidden; margin-bottom: 8px;
           position: relative;
         }
 
-        .loading-metrics {
-          display: flex; justify-content: space-between;
-          font-size: 10px; color: #666; letter-spacing: 1px;
+        .status-fill {
+          height: 100%; background: #00d2ff;
+          box-shadow: 0 0 10px #00d2ff;
+          transition: width 0.1s linear;
         }
 
-        .nums { font-family: monospace; color: #00f3ff; }
-
-        /* --- DATA GRID --- */
-        .data-grid {
-          width: 100%; display: grid; grid-template-columns: 1fr; gap: 8px;
-          perspective: 1000px;
+        .percentage-text {
+          font-size: 12px; color: #00d2ff; letter-spacing: 2px;
+          text-align: right; font-weight: bold;
         }
 
-        .holo-card {
-          position: relative;
-          background: rgba(0, 10, 20, 0.4);
-          border: 1px solid rgba(0, 243, 255, 0.1);
-          padding: 12px; display: flex; align-items: center;
-          border-radius: 2px; overflow: hidden;
-          transition: all 0.3s ease;
+        /* --- MODULE CHECKLIST --- */
+        .modules-list {
+          width: 100%;
+          background: rgba(0, 10, 20, 0.6);
+          border: 1px solid rgba(0, 210, 255, 0.2);
           backdrop-filter: blur(5px);
+          padding: 15px;
+          border-radius: 4px;
+          /* Prevent overflowing on very small screens */
+          max-height: 40vh;
+          overflow-y: auto;
+          scrollbar-width: none; /* Firefox */
         }
-
-        .holo-card.active {
-          background: rgba(0, 243, 255, 0.05);
-          border-color: #00f3ff;
-          transform: translateX(10px);
-          box-shadow: -5px 0 15px rgba(0,243,255,0.1);
-        }
-
-        .holo-card.done { border-color: rgba(0, 255, 157, 0.3); opacity: 0.7; }
-        .holo-card.done .card-status-line { background: #00ff9d; }
-
-        .card-status-line {
-          position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
-          background: rgba(0, 243, 255, 0.3);
-          transition: background 0.3s;
-        }
-        .active .card-status-line { background: #00f3ff; box-shadow: 0 0 10px #00f3ff; }
-
-        .card-body { display: flex; align-items: center; width: 100%; padding-left: 8px; }
-        .card-icon-box { width: 24px; display: flex; justify-content: center; margin-right: 12px; }
         
-        .card-header { font-size: 12px; font-weight: 700; letter-spacing: 1px; color: #e0e0e0; }
-        .card-sub { font-size: 9px; color: #777; text-transform: uppercase; margin-top: 2px; }
+        .modules-list::-webkit-scrollbar { display: none; } /* Chrome/Safari */
 
-        .scanning-bar {
-          position: absolute; top: 0; left: 0; width: 2px; height: 100%;
-          background: rgba(255,255,255,0.5);
-          filter: blur(2px);
-          animation: scanX 2s ease-in-out infinite;
+        .module-item {
+          display: flex; align-items: center; gap: 12px;
+          padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+          font-size: 14px; transition: all 0.3s;
         }
 
-        /* --- ANIMATIONS --- */
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes spinRev { from { transform: rotateX(60deg) rotate(360deg); } to { transform: rotateX(60deg) rotate(0deg); } }
-        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(0.9); } }
-        @keyframes gridMove { from { background-position: 0 0; } to { background-position: 0 60px; } }
-        @keyframes auroraSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes scanX { 0% { left: -10%; opacity: 0; } 50% { opacity: 1; } 100% { left: 110%; opacity: 0; } }
+        .module-item:last-child { border-bottom: none; }
         
-        .animate-spin-slow { animation: spin 2s linear infinite; }
-        .text-neon { color: #00f3ff; }
-        .text-warn { color: #bc13fe; }
-        .mr-2 { margin-right: 8px; }
+        .module-item.pending { opacity: 0.4; }
+        .module-item.active { opacity: 1; }
+        .module-item.pulsing .module-text { color: #00d2ff; }
+        .module-item.pulsing .module-status { color: #00d2ff; animation: blink 0.5s infinite; }
 
-        .warp-out { animation: warp 1s cubic-bezier(0.7, 0, 0.2, 1) forwards; }
-        @keyframes warp { 
-          0% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.8; transform: scale(2) rotate(2deg); filter: brightness(2) blur(2px); }
-          100% { opacity: 0; transform: scale(8); display: none; }
-        }
+        .module-text { flex-grow: 1; font-weight: 500; letter-spacing: 1px; }
+        .module-status { font-size: 10px; font-weight: bold; letter-spacing: 1px; color: #00ff9d; white-space: nowrap; }
 
-        /* --- RESPONSIVE ADJUSTMENTS --- */
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        /* --- MEDIA QUERIES FOR LANDSCAPE & SMALL DEVICES --- */
         
-        /* Tablet / Small Desktop */
-        @media (max-width: 1024px) {
-          .interface-rig { max-width: 400px; }
-          .cyber-title { font-size: 36px; }
-        }
-
-        /* Mobile Phones */
-        @media (max-width: 600px) {
-          .interface-rig { width: 92vw; }
+        /* Landscape Mode on Phones (Short height) */
+        @media (max-height: 500px) and (orientation: landscape) {
+          .quantum-loader {
+            align-items: flex-start;
+            padding-top: 20px;
+            overflow-y: auto;
+          }
           
-          /* Scale down header */
-          .header-deck { margin-bottom: 20px; font-size: 10px; }
+          .interface-container {
+            flex-direction: row;
+            max-width: 600px;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+          }
           
-          /* Scale down Reactor */
-          .reactor-container { width: 100px; height: 100px; margin-bottom: 20px; }
-          .core-hex { width: 30px; height: 30px; }
-
-          /* Scale down Title */
-          .cyber-title { font-size: 26px; letter-spacing: 3px; margin-bottom: 10px; }
+          .gyro-scene {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 0;
+            flex-shrink: 0;
+          }
           
-          /* Compact Cards */
-          .holo-card { padding: 10px; }
-          .card-icon-box { width: 20px; margin-right: 8px; }
-          .card-header { font-size: 11px; }
-          .card-sub { font-size: 8px; }
+          .title-section {
+            margin-bottom: 10px;
+            text-align: left;
+          }
+          
+          .modules-list {
+            padding: 10px;
+            max-width: 300px;
+          }
+          
+          .cyber-title {
+             font-size: 24px;
+             margin-bottom: 5px;
+          }
         }
 
-        /* Very Small Screens / Landscape Mobile (Height constrained) */
-        @media (max-height: 750px) {
-          .interface-rig { transform: scale(0.85); transform-origin: center center; }
-          .reactor-container { margin-bottom: 15px; }
-          .header-deck { margin-bottom: 15px; }
-          .main-display { margin-bottom: 15px; }
-        }
-        
-        /* Ultra Compact (iPhone SE, etc) */
+        /* Small Phones (Portrait) */
         @media (max-width: 380px) {
-           .cyber-title { font-size: 22px; letter-spacing: 2px; }
-           .deck-item span { display: none; } /* Hide text, keep icon */
-           .deck-item.left span { display: inline; } /* Keep left text */
+           .cyber-title { font-size: 28px; }
+           .module-text { font-size: 13px; }
+           .module-status { font-size: 9px; }
         }
       `}</style>
     </div>
