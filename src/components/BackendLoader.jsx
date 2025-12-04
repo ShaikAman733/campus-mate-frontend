@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Zap, Database, Globe, CheckCircle2, Lock, AlertTriangle, Loader2 } from 'lucide-react';
+import { Shield, Zap, Database, Globe, CheckCircle2, Lock, Loader2 } from 'lucide-react';
 
 const BackendLoader = ({ children }) => {
   const [isReady, setIsReady] = useState(false);
@@ -55,25 +55,30 @@ const BackendLoader = ({ children }) => {
         setShowLongWaitMsg(true);
     }, 8000);
 
-    // --- SERVER CHECK LOGIC ---
+    // --- UPDATED SERVER CHECK LOGIC ---
     const checkServer = async () => {
       try {
         // 1. WAKE UP PYTHON DIRECTLY (Fire and Forget)
-        fetch('https://campus-bot-python.onrender.com', { mode: 'no-cors' }).catch(() => {
-            console.log("Pinging Python server to wake it up...");
+        // We use no-cors because we just want to trigger the boot-up process
+        fetch('https://campus-bot-python.onrender.com/', { mode: 'no-cors' }).catch(() => {
+            // Ignore errors here, this is just a wake-up call
         });
 
         // 2. CHECK NODE SERVER (The Gateway)
-        const response = await fetch('https://campus-bot-node.onrender.com/api/lostfound');
+        // We add a timestamp (?t=...) to prevent the browser from caching a 503 response
+        const response = await fetch(`https://campus-bot-node.onrender.com/api/lostfound?t=${new Date().getTime()}`);
         
         if (response.ok) {
           triggerExit();
         } else {
-          console.log("Node server not ready yet... retrying.");
-          setTimeout(checkServer, 2000);
+          // If 503 (Sleeping) or 500 (Error), wait 3 seconds and retry
+          console.log(`Server Booting... Status: ${response.status}`);
+          setTimeout(checkServer, 3000);
         }
       } catch (error) {
-          setTimeout(checkServer, 2000);
+          // Network Error (DNS resolution or Connection Refused)
+          console.log("Network unreachable. Retrying in 3s...");
+          setTimeout(checkServer, 3000);
       }
     };
 
@@ -100,11 +105,10 @@ const BackendLoader = ({ children }) => {
       <div className="holo-floor"></div>
       <div className="particles"></div>
 
-      {/* REPLACED BUTTON WITH STATUS MESSAGE */}
       {showLongWaitMsg && !isExiting && (
         <div className="wait-message fade-in">
             <Loader2 size={16} className="spin-icon" />
-            <span>ESTABLISHING SECURE LINK... JUST A MOMENT</span>
+            <span>ESTABLISHING SECURE LINK... WAKING UP SERVERS</span>
         </div>
       )}
 
@@ -164,7 +168,6 @@ const BackendLoader = ({ children }) => {
           100% { opacity: 0; transform: scale(10); display: none; }
         }
         
-        /* NEW STYLES FOR WAIT MESSAGE */
         .wait-message {
             position: absolute; bottom: 15%; z-index: 100; display: flex; align-items: center; gap: 10px;
             color: rgba(0, 210, 255, 0.8);
