@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { 
   X, ChevronDown, MessageCircle, Send, 
-  Zap, Shield, Activity, AlertTriangle, CheckCircle2 
+  Zap, Shield, Activity, AlertTriangle, CheckCircle2,
+  Mail // Added Mail icon
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -121,9 +122,26 @@ const HelpSupportModal = ({ isOpen, onClose }) => {
             </div>
           </section>
 
-          {/* Contact Developer */}
+          {/* Developer Contact Card (New Section) */}
           <section>
-             <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 px-1">Report an Issue</h3>
+            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 px-1">Developer Contact</h3>
+            <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-2xl group transition-all hover:border-[#00B291]/30">
+               <div className="p-3 bg-white dark:bg-black rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm group-hover:scale-105 transition-transform">
+                  <Mail className="h-5 w-5 text-[#00B291]" />
+               </div>
+               <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Lead Developer</p>
+                  <h4 className="text-sm font-bold text-gray-900 dark:text-white">Shaik Aman</h4>
+                  <a href="mailto:shaikaman2411@gmail.com" className="text-xs text-[#00B291] hover:underline font-medium">
+                    shaikaman2411@gmail.com
+                  </a>
+               </div>
+            </div>
+          </section>
+
+          {/* Contact Form */}
+          <section>
+             <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 px-1">Report a Bug</h3>
              <form onSubmit={handleSupportSubmit} className="space-y-4">
                 <div className="relative">
                   <textarea 
