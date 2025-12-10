@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   X, User, Lock, ChevronRight, GraduationCap, Briefcase, 
-  Loader2, AlertCircle, IdCard
+  Loader2, AlertCircle, IdCard, ArrowRight
 } from 'lucide-react';
 
 const AuthModal = ({ isOpen, onClose, onLogin, canClose = true }) => {
@@ -27,6 +27,27 @@ const AuthModal = ({ isOpen, onClose, onLogin, canClose = true }) => {
   }, [isOpen, isRegistering, role]);
 
   if (!isOpen) return null;
+
+  // --- FIXED GUEST ACCESS FUNCTION ---
+  const handleGuestAccess = () => {
+    // 1. Create a dummy guest user object so the app thinks we are logged in
+    const guestUser = {
+      _id: 'guest_123',
+      username: 'Guest',
+      role: 'guest',
+      isGuest: true // Flag to hide sensitive features if needed
+    };
+
+    // 2. Pass this guest user to the parent component
+    if (onLogin) {
+      onLogin(guestUser);
+    }
+
+    // 3. Close the modal
+    if (onClose) {
+      onClose();
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -67,19 +88,16 @@ const AuthModal = ({ isOpen, onClose, onLogin, canClose = true }) => {
       const data = await response.json();
 
       if (!response.ok) {
-        // --- CUSTOM ERROR MESSAGE LOGIC ---
         let serverError = data.error || 'Authentication failed';
         let lowerError = serverError.toLowerCase();
 
         if (isRegistering) {
-            // Registration Errors
             if (lowerError.includes('exist') || lowerError.includes('duplicate')) {
                 serverError = 'Account already exists. Please Login.';
             } else if (lowerError.includes('username')) {
                 serverError = 'Try changing username.';
             }
         } else {
-            // Login Errors
             if (lowerError.includes('found') || lowerError.includes('invalid') || lowerError.includes('match')) {
                 serverError = 'No account found. Please Register.';
             }
@@ -89,8 +107,6 @@ const AuthModal = ({ isOpen, onClose, onLogin, canClose = true }) => {
       }
 
       onLogin(data.user);
-      // We don't manually call onClose() here because the parent usually handles 
-      // closing via state updates, but we call it just in case logic varies.
       onClose();
     } catch (err) {
       setError(err.message);
@@ -106,12 +122,10 @@ const AuthModal = ({ isOpen, onClose, onLogin, canClose = true }) => {
         {/* Background Glow */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-[#00B291] opacity-10 blur-[100px] pointer-events-none"></div>
 
-        {/* Close Button - HIDDEN if canClose is false */}
-        {canClose && (
-          <button onClick={onClose} className="absolute top-5 right-5 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-all z-20 active:scale-90">
+        {/* Close Button - Now calls handleGuestAccess to ensure proper fallback */}
+        <button onClick={handleGuestAccess} className="absolute top-5 right-5 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-all z-20 active:scale-90">
             <X className="w-5 h-5" />
-          </button>
-        )}
+        </button>
 
         {/* Header */}
         <div className="px-8 pt-10 pb-4 relative z-10 text-center">
@@ -194,13 +208,27 @@ const AuthModal = ({ isOpen, onClose, onLogin, canClose = true }) => {
           </form>
         </div>
 
-        <div className="p-5 bg-gray-50 dark:bg-[#121212] border-t border-gray-100 dark:border-gray-800 text-center">
+        {/* Footer with Toggle and GUEST BUTTON */}
+        <div className="p-5 bg-gray-50 dark:bg-[#121212] border-t border-gray-100 dark:border-gray-800 text-center flex flex-col gap-3">
           <p className="text-xs text-gray-500 dark:text-gray-400">
             {isRegistering ? 'Already have an account? ' : "Don't have an account? "}
             <button onClick={() => { setIsRegistering(!isRegistering); setError(''); }} className={`font-bold hover:underline ml-1 uppercase text-[10px] tracking-wider transition-colors ${role === 'student' ? 'text-[#00B291]' : 'text-blue-500'}`}>
               {isRegistering ? 'Login' : 'Register'}
             </button>
           </p>
+
+          {/* GUEST BUTTON */}
+          <div className="w-full pt-3 border-t border-gray-200 dark:border-gray-800">
+            <button 
+                type="button" 
+                onClick={handleGuestAccess} 
+                className="group flex items-center justify-center gap-1 mx-auto text-xs font-semibold text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-all"
+            >
+                Continue as Guest 
+                <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
+            </button>
+          </div>
+
         </div>
       </div>
     </div>
