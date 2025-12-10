@@ -465,7 +465,7 @@ const App = () => {
                           <button onClick={() => { setActiveModal('help'); setIsProfileMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#202020] rounded-xl transition-colors text-left"><div className="p-1.5 rounded-lg bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400"><HelpCircle className="h-4 w-4" /></div>Help & Support</button>
                         </div>
                         <div className="p-2 border-t border-gray-100 dark:border-gray-800">
-                          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-colors text-left"><div className="p-1.5 rounded-lg bg-red-50 dark:bg-red-900/10 text-red-500"><LogOut className="h-4 w-4" /></div>Sign Out</button>
+                          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-colors text-left"><div className="p-1.5 rounded-lg bg-red-50 dark:bg-red-900/10 text-red-500"><LogOut className="h-4 w-4" /></div>Log Out</button>
                         </div>
                       </div>
                     )}
