@@ -4,6 +4,7 @@ import {
   X, User, Lock, ChevronRight, GraduationCap, Briefcase, 
   Loader2, AlertCircle, IdCard, ArrowRight
 } from 'lucide-react';
+import { toast } from 'react-hot-toast'; // Import Toast
 
 const AuthModal = ({ isOpen, onClose, onLogin, canClose = true }) => {
   const [isRegistering, setIsRegistering] = useState(false);
@@ -27,23 +28,36 @@ const AuthModal = ({ isOpen, onClose, onLogin, canClose = true }) => {
 
   if (!isOpen) return null;
 
-  // --- FIXED: UNIQUE GUEST ID ---
+  // --- FIXED: UNIQUE GUEST ID + TOAST NOTIFICATION ---
   const handleGuestAccess = () => {
-    // Generate a random unique string
+    // 1. Trigger the Bottom Toast Notification
+    toast.error("Guest Mode: Your history will not be saved.", {
+        position: "bottom-center",
+        duration: 4000,
+        style: {
+            background: '#333',
+            color: '#fff',
+            borderRadius: '10px',
+            fontSize: '14px',
+        },
+        icon: '⚠️',
+    });
+
+    // 2. Generate a random unique string
     const uniqueId = Math.random().toString(36).substr(2, 9);
     
-    // Create a unique Guest User object
+    // 3. Create a unique Guest User object
     const guestUser = {
-      _id: `guest_${uniqueId}_${Date.now()}`, // Unique ID for database/local storage
-      username: `Guest`, // Display name
+      _id: `guest_${uniqueId}_${Date.now()}`, 
+      username: `Guest`, 
       role: 'guest',
       isGuest: true
     };
 
-    // Pass this unique user to the parent
+    // 4. Pass this unique user to the parent
     if (onLogin) onLogin(guestUser);
     
-    // Close modal
+    // 5. Close modal
     if (onClose) onClose();
   };
 
