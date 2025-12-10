@@ -9,7 +9,6 @@ const AuthModal = ({ isOpen, onClose, onLogin, canClose = true }) => {
   const [isRegistering, setIsRegistering] = useState(false);
   const [role, setRole] = useState('student');
   
-  // State Variables
   const [username, setUsername] = useState(''); 
   const [password, setPassword] = useState('');
   const [employeeId, setEmployeeId] = useState(''); 
@@ -28,25 +27,24 @@ const AuthModal = ({ isOpen, onClose, onLogin, canClose = true }) => {
 
   if (!isOpen) return null;
 
-  // --- FIXED GUEST ACCESS FUNCTION ---
+  // --- FIXED: UNIQUE GUEST ID ---
   const handleGuestAccess = () => {
-    // 1. Create a dummy guest user object so the app thinks we are logged in
+    // Generate a random unique string
+    const uniqueId = Math.random().toString(36).substr(2, 9);
+    
+    // Create a unique Guest User object
     const guestUser = {
-      _id: 'guest_123',
-      username: 'Guest',
+      _id: `guest_${uniqueId}_${Date.now()}`, // Unique ID for database/local storage
+      username: `Guest`, // Display name
       role: 'guest',
-      isGuest: true // Flag to hide sensitive features if needed
+      isGuest: true
     };
 
-    // 2. Pass this guest user to the parent component
-    if (onLogin) {
-      onLogin(guestUser);
-    }
-
-    // 3. Close the modal
-    if (onClose) {
-      onClose();
-    }
+    // Pass this unique user to the parent
+    if (onLogin) onLogin(guestUser);
+    
+    // Close modal
+    if (onClose) onClose();
   };
 
   const handleSubmit = async (e) => {
@@ -54,7 +52,6 @@ const AuthModal = ({ isOpen, onClose, onLogin, canClose = true }) => {
     setError('');
     setLoading(true);
 
-    // --- Validation ---
     if (!username.trim() || !password) {
         setError('Please enter Username and Password.');
         setLoading(false);
@@ -102,7 +99,6 @@ const AuthModal = ({ isOpen, onClose, onLogin, canClose = true }) => {
                 serverError = 'No account found. Please Register.';
             }
         }
-        
         throw new Error(serverError);
       }
 
@@ -122,7 +118,7 @@ const AuthModal = ({ isOpen, onClose, onLogin, canClose = true }) => {
         {/* Background Glow */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-[#00B291] opacity-10 blur-[100px] pointer-events-none"></div>
 
-        {/* Close Button - Now calls handleGuestAccess to ensure proper fallback */}
+        {/* Close Button */}
         <button onClick={handleGuestAccess} className="absolute top-5 right-5 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-all z-20 active:scale-90">
             <X className="w-5 h-5" />
         </button>
@@ -155,7 +151,7 @@ const AuthModal = ({ isOpen, onClose, onLogin, canClose = true }) => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             
-            {/* 1. Username Input */}
+            {/* Username */}
             <div className="group animate-slide-up">
               <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5 ml-1 transition-colors group-focus-within:text-[#00B291]">Username</label>
               <div className="relative">
@@ -170,7 +166,7 @@ const AuthModal = ({ isOpen, onClose, onLogin, canClose = true }) => {
               </div>
             </div>
 
-            {/* 2. Password Input */}
+            {/* Password */}
             <div className="group animate-slide-up" style={{ animationDelay: '50ms' }}>
               <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5 ml-1 transition-colors group-focus-within:text-[#00B291]">Password</label>
               <div className="relative">
@@ -185,7 +181,7 @@ const AuthModal = ({ isOpen, onClose, onLogin, canClose = true }) => {
               </div>
             </div>
 
-            {/* 3. Employee ID Input (Only for Faculty Registration) */}
+            {/* Employee ID */}
             {role === 'teacher' && isRegistering && (
               <div className="group animate-slide-up" style={{ animationDelay: '100ms' }}>
                 <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5 ml-1 transition-colors group-focus-within:text-[#00B291]">Employee ID</label>
@@ -208,7 +204,7 @@ const AuthModal = ({ isOpen, onClose, onLogin, canClose = true }) => {
           </form>
         </div>
 
-        {/* Footer with Toggle and GUEST BUTTON */}
+        {/* Footer */}
         <div className="p-5 bg-gray-50 dark:bg-[#121212] border-t border-gray-100 dark:border-gray-800 text-center flex flex-col gap-3">
           <p className="text-xs text-gray-500 dark:text-gray-400">
             {isRegistering ? 'Already have an account? ' : "Don't have an account? "}
@@ -217,7 +213,6 @@ const AuthModal = ({ isOpen, onClose, onLogin, canClose = true }) => {
             </button>
           </p>
 
-          {/* GUEST BUTTON */}
           <div className="w-full pt-3 border-t border-gray-200 dark:border-gray-800">
             <button 
                 type="button" 
