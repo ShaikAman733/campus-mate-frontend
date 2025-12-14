@@ -1,16 +1,60 @@
-# React + Vite
+# CampusMate – Frontend 🎓💻
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+CampusMate Frontend is a React-based Single Page Application (SPA) that provides a modern, responsive user interface for students.  
+It connects to backend services to deliver AI-powered chat, Lost & Found, GPA tools, and profile management.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Features
 
-## React Compiler
+- ⚛️ Built with React (SPA)
+- 🌙 Dark / Light mode support
+- 🤖 AI Chat Interface (Text + Image upload)
+- 📦 Lost & Found module
+- 📊 GPA Calculator
+- 👤 User Authentication & Profile Management
+- 📱 Fully responsive (mobile + desktop)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## 🛠️ Tech Stack
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- React.js
+- JavaScript (ES6+)
+- HTML5
+- CSS3
+- Axios (API communication)
+- Git & GitHub
+
+---
+
+## 📂 Project Structure
+src/
+├── components/
+├── hooks/
+├── pages/
+├── assets/
+├── App.jsx
+└── main.jsx
+
+
+---
+
+## ⚙️ Setup & Run Locally
+
+```bash
+# Clone the repository
+git clone https://github.com/your-username/campusmate-frontend.git
+
+# Navigate to project folder
+cd campusmate-frontend
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+🌐 Live Demo
+
+https://campus-mate-frontend.vercel.app/
