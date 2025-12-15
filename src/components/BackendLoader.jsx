@@ -1,238 +1,231 @@
-import React, { useState, useEffect } from 'react';
-import { Shield, Zap, Database, Globe, CheckCircle2, Lock, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Terminal, Server, Wifi, Clock, AlertCircle } from 'lucide-react';
 
-const BackendLoader = ({ children }) => {
+const ServerWakeupLoader = ({ children }) => {
   const [isReady, setIsReady] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [decodedText, setDecodedText] = useState("INIT_SYSTEM");
-  const [activeStage, setActiveStage] = useState(0);
-  const [isExiting, setIsExiting] = useState(false);
-  const [showLongWaitMsg, setShowLongWaitMsg] = useState(false);
+  const [logs, setLogs] = useState([]);
+  const [status, setStatus] = useState('initiating'); // initiating, waking, ready
+  const [secondsWaited, setSecondsWaited] = useState(0);
+  const scrollRef = useRef(null);
+  const logIdRef = useRef(0); // Fix for unique keys
 
-  const stages = [
-    { id: 1, text: "Neural Network", icon: <Zap size={14} /> },
-    { id: 2, text: "Database Shards", icon: <Database size={14} /> },
-    { id: 3, text: "Security Protocols", icon: <Lock size={14} /> },
-    { id: 4, text: "Global CDN", icon: <Globe size={14} /> },
-    { id: 5, text: "User Interface", icon: <Shield size={14} /> },
-  ];
-
-  const originalText = "CAMPUS MATE";
-  
-  // Matrix Effect
-  const shuffleText = () => {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890@#$%&";
-    let iterations = 0;
-    const interval = setInterval(() => {
-      setDecodedText(prev => 
-        originalText.split("").map((letter, index) => {
-          if (index < iterations) return originalText[index];
-          return chars[Math.floor(Math.random() * chars.length)];
-        }).join("")
-      );
-      
-      if (iterations >= originalText.length) clearInterval(interval);
-      iterations += 1 / 3; 
-    }, 30);
+  // Helper to add logs with timestamps
+  const addLog = (message, type = 'info') => {
+    const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    // Increment the counter to guarantee unique IDs even if logs happen in the same millisecond
+    logIdRef.current += 1;
+    setLogs(prev => [...prev, { id: logIdRef.current, time: timestamp, message, type }]);
   };
 
   useEffect(() => {
-    shuffleText();
-    const shuffleInterval = setInterval(shuffleText, 10000);
+    // Auto-scroll logs
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [logs]);
 
-    const progressInterval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 98) return 98; 
-        const stageIndex = Math.floor((prev / 100) * stages.length);
-        setActiveStage(stageIndex);
-        const speed = prev < 30 ? 0.8 : prev < 70 ? 0.4 : 0.1; 
-        return prev + speed;
-      });
-    }, 100);
+  useEffect(() => {
+    let timerInterval;
+    
+    // Initial Sequence
+    addLog("Initializing Campus Mate client...", "info");
+    setTimeout(() => addLog("Checking server status...", "info"), 800);
 
-    // Timer to show the "Just a moment" message if server is sleeping
-    const longWaitTimer = setTimeout(() => {
-        setShowLongWaitMsg(true);
-    }, 8000);
-
-    // --- UPDATED SERVER CHECK LOGIC ---
     const checkServer = async () => {
       try {
-        // 1. WAKE UP PYTHON DIRECTLY (Fire and Forget)
-        // We use no-cors because we just want to trigger the boot-up process
-        fetch('https://campus-bot-python.onrender.com/', { mode: 'no-cors' }).catch(() => {
-            // Ignore errors here, this is just a wake-up call
-        });
+        // 1. Trigger Python Server (Fire & Forget)
+        // We use no-cors because we just want to trigger the boot-up process without waiting for a valid CORS response
+        fetch('https://campus-bot-python.onrender.com/', { mode: 'no-cors' })
+          .catch(() => {}); 
 
-        // 2. CHECK NODE SERVER (The Gateway)
+        // 2. Check Node Server (The Gateway)
         // We add a timestamp (?t=...) to prevent the browser from caching a 503 response
-        const response = await fetch(`https://campus-bot-node.onrender.com/api/lostfound?t=${new Date().getTime()}`);
+        const start = Date.now();
+        const response = await fetch(`https://campus-bot-node.onrender.com/api/lostfound?t=${start}`);
         
         if (response.ok) {
-          triggerExit();
+          clearInterval(timerInterval);
+          setStatus('ready');
+          addLog("Connection established successfully.", "success");
+          addLog("Loading application interface...", "success");
+          setTimeout(() => setIsReady(true), 1500);
         } else {
-          // If 503 (Sleeping) or 500 (Error), wait 3 seconds and retry
-          console.log(`Server Booting... Status: ${response.status}`);
-          setTimeout(checkServer, 3000);
+          throw new Error("Server warming up");
         }
       } catch (error) {
-          // Network Error (DNS resolution or Connection Refused)
-          console.log("Network unreachable. Retrying in 3s...");
-          setTimeout(checkServer, 3000);
+        if (status !== 'waking') {
+            setStatus('waking');
+            // These two logs happen in the same millisecond, causing the key conflict previously
+            addLog("Free-tier instance detected (Cold Start).", "warning");
+            addLog("Waking up Render dynos... (This usually takes 30-50s)", "warning");
+        }
+        // Retry logic: Wait 4 seconds before trying again to avoid flooding
+        setTimeout(checkServer, 4000);
       }
     };
 
-    const triggerExit = () => {
-      setProgress(100);
-      setActiveStage(5);
-      setIsExiting(true);
-      setTimeout(() => setIsReady(true), 1500);
-    };
+    // Start the timer to show users this is expected behavior
+    timerInterval = setInterval(() => {
+      setSecondsWaited(prev => prev + 1);
+    }, 1000);
 
-    checkServer();
+    // Initial delay before first check
+    setTimeout(checkServer, 1500);
 
-    return () => {
-      clearInterval(progressInterval);
-      clearInterval(shuffleInterval);
-      clearTimeout(longWaitTimer);
-    };
+    return () => clearInterval(timerInterval);
   }, []);
 
   if (isReady) return <>{children}</>;
 
   return (
-    <div className={`quantum-loader ${isExiting ? 'warp-speed' : ''}`}>
-      <div className="holo-floor"></div>
-      <div className="particles"></div>
-
-      {showLongWaitMsg && !isExiting && (
-        <div className="wait-message fade-in">
-            <Loader2 size={16} className="spin-icon" />
-            <span>ESTABLISHING SECURE LINK... WAKING UP SERVERS</span>
-        </div>
-      )}
-
-      <div className="interface-container">
-        <div className="gyro-scene">
-          <div className="gyro-ring ring-1"></div>
-          <div className="gyro-ring ring-2"></div>
-          <div className="gyro-ring ring-3"></div>
-          <div className="gyro-core">
-            <div className="core-inner"></div>
+    <div className="vercel-loader">
+      <div className="card">
+        {/* Header */}
+        <div className="header">
+          <div className="project-info">
+            <span className="project-name">Campus Mate</span>
+          </div>
+          <div className={`status-pill ${status}`}>
+            <div className="dot"></div>
+            {status === 'initiating' && 'CONNECTING'}
+            {status === 'waking' && 'BOOTING SERVER'}
+            {status === 'ready' && 'ONLINE'}
           </div>
         </div>
 
-        <div className="title-section">
-          <h1 className="cyber-title" data-text={decodedText}>{decodedText}</h1>
-          <div className="status-bar">
-            <div className="status-fill" style={{ width: `${progress}%` }}></div>
-          </div>
-          <div className="percentage-text">SYSTEM INTEGRITY: {Math.floor(progress)}%</div>
-        </div>
-
-        <div className="modules-list">
-          {stages.map((stage, index) => (
-            <div 
-              key={stage.id} 
-              className={`module-item ${index <= activeStage ? 'active' : 'pending'} ${index === activeStage ? 'pulsing' : ''}`}
-            >
-              <div className="module-icon">
-                {index < activeStage ? <CheckCircle2 size={14} color="#00ff9d" /> : stage.icon}
-              </div>
-              <span className="module-text">{stage.text}</span>
-              <div className="module-status">
-                {index < activeStage ? 'ONLINE' : index === activeStage ? 'LOADING...' : 'WAITING'}
-              </div>
+        {/* Status Graphic */}
+        <div className="graphic-area">
+            <div className="server-icon-wrapper">
+                <Server size={32} className={status === 'waking' ? 'pulse-icon' : ''} />
+                <div className="connection-line"></div>
+                <div className={`signal ${status === 'ready' ? 'success' : 'waiting'}`}>
+                    <Wifi size={20} />
+                </div>
             </div>
-          ))}
+            <div className="wait-timer">
+                <Clock size={14} />
+                <span>{secondsWaited}s elapsed</span>
+            </div>
+        </div>
+
+        {/* Explanation for Recruiter */}
+        <div className="info-box">
+            <AlertCircle size={16} className="info-icon"/>
+            <p>
+                This project is hosted on <strong>Render Free Tier</strong>. 
+                If the server was inactive, it may take up to <strong>50 seconds</strong> to cold-start. 
+                Please do not close the tab.
+            </p>
+        </div>
+
+        {/* Terminal Logs */}
+        <div className="terminal" ref={scrollRef}>
+          <div className="terminal-header">
+            <Terminal size={12} />
+            <span>System Logs</span>
+          </div>
+          <div className="terminal-content">
+            {logs.map((log) => (
+              <div key={log.id} className={`log-line ${log.type}`}>
+                <span className="timestamp">[{log.time}]</span>
+                <span className="message">
+                  {log.type === 'success' && '✓ '}
+                  {log.type === 'warning' && '⚠ '}
+                  {log.message}
+                </span>
+              </div>
+            ))}
+            {status === 'waking' && (
+               <div className="log-line typing">
+                 <span className="timestamp">...</span>
+                 <span className="message">Waiting for server handshake...</span>
+               </div>
+            )}
+          </div>
         </div>
       </div>
 
       <style>{`
-        .quantum-loader {
+        .vercel-loader {
           position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-          background: #030305;
-          color: #fff;
+          background: #000; color: #fff;
           display: flex; align-items: center; justify-content: center;
-          font-family: 'Rajdhani', ui-sans-serif, system-ui, sans-serif;
-          overflow: hidden;
-          perspective: 1000px;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
           z-index: 9999;
-          min-height: -webkit-fill-available;
         }
-        .warp-speed { animation: warpOut 1.5s cubic-bezier(0.7, 0, 0.2, 1) forwards; }
-        .warp-speed .gyro-scene { animation: coreImplode 0.5s forwards; }
-        @keyframes warpOut {
-          0% { opacity: 1; transform: scale(1); }
-          50% { opacity: 1; transform: scale(4); filter: brightness(20); }
-          100% { opacity: 0; transform: scale(10); display: none; }
+        .card {
+          width: 90%; max-width: 450px;
+          background: #111;
+          border: 1px solid #333;
+          border-radius: 12px;
+          padding: 24px;
+          box-shadow: 0 20px 40px rgba(0,0,0,0.5);
         }
+        /* Header */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .project-name { font-weight: 700; font-size: 18px; letter-spacing: -0.5px; }
+        .badge { background: #333; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: 8px; color: #888; }
         
-        .wait-message {
-            position: absolute; bottom: 15%; z-index: 100; display: flex; align-items: center; gap: 10px;
-            color: rgba(0, 210, 255, 0.8);
-            padding: 8px 16px; border-radius: 4px; 
-            font-family: inherit; letter-spacing: 2px; font-size: 12px; font-weight: 600;
-            text-shadow: 0 0 5px rgba(0, 210, 255, 0.5);
-            background: rgba(0, 10, 20, 0.5);
-            border: 1px solid rgba(0, 210, 255, 0.1);
+        .status-pill { 
+            display: flex; align-items: center; gap: 6px; 
+            font-size: 11px; font-weight: 600; 
+            padding: 4px 10px; border-radius: 20px;
+            border: 1px solid;
         }
-        .fade-in { animation: fadeIn 1s ease-in forwards; }
-        .spin-icon { animation: spin 2s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .status-pill.initiating { background: #000; border-color: #333; color: #888; }
+        .status-pill.waking { background: rgba(245, 166, 35, 0.1); border-color: #f5a623; color: #f5a623; }
+        .status-pill.ready { background: rgba(80, 227, 194, 0.1); border-color: #50e3c2; color: #50e3c2; }
+        .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+        .status-pill.waking .dot { animation: blink 1s infinite; }
 
-        .holo-floor {
-          position: absolute; bottom: -50%; left: -50%; width: 200%; height: 100%;
-          background-image: linear-gradient(rgba(0, 210, 255, 0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 210, 255, 0.3) 1px, transparent 1px);
-          background-size: 50px 50px; transform: rotateX(70deg); animation: floorMove 3s linear infinite;
-          mask-image: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 60%); z-index: 1; pointer-events: none;
+        /* Graphic */
+        .graphic-area { display: flex; flex-direction: column; align-items: center; margin-bottom: 24px; gap: 15px; }
+        .server-icon-wrapper { display: flex; align-items: center; gap: 10px; color: #666; }
+        .pulse-icon { color: #f5a623; animation: pulse 2s infinite; }
+        .connection-line { width: 60px; height: 1px; background: #333; position: relative; }
+        .connection-line::after {
+            content: ''; position: absolute; top: -1px; left: 0; width: 20px; height: 3px; 
+            background: #f5a623; opacity: 0;
+            animation: transmit 1.5s infinite linear;
         }
-        @keyframes floorMove { from { background-position: 0 0; } to { background-position: 0 50px; } }
-        .gyro-scene {
-          position: relative; width: clamp(120px, 25vw, 180px); height: clamp(120px, 25vw, 180px);
-          transform-style: preserve-3d; animation: float 6s ease-in-out infinite; margin-bottom: clamp(20px, 5vh, 40px);
+        .wait-timer { font-size: 12px; color: #444; display: flex; align-items: center; gap: 6px; font-family: monospace; }
+
+        /* Info Box */
+        .info-box {
+            background: rgba(51, 51, 51, 0.3);
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 12px;
+            display: flex; gap: 10px;
+            margin-bottom: 20px;
         }
-        .gyro-ring { position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 2px solid rgba(0, 210, 255, 0.1); box-shadow: 0 0 15px rgba(0, 210, 255, 0.1); }
-        .ring-1 { border-top: 2px solid #00d2ff; border-bottom: 2px solid #00d2ff; animation: rotate1 4s linear infinite; }
-        .ring-2 { width: 80%; height: 80%; top: 10%; left: 10%; border: 2px solid rgba(255, 0, 255, 0.1); border-left: 2px solid #ff00ff; border-right: 2px solid #ff00ff; animation: rotate2 5s linear infinite; }
-        .ring-3 { width: 60%; height: 60%; top: 20%; left: 20%; border: 2px solid rgba(0, 255, 157, 0.1); border-top: 2px solid #00ff9d; animation: rotate3 10s linear infinite; }
-        .gyro-core { position: absolute; top: 35%; left: 35%; width: 30%; height: 30%; background: #00d2ff; border-radius: 50%; box-shadow: 0 0 30px #00d2ff; animation: pulseCore 2s infinite; }
-        @keyframes rotate1 { 0% { transform: rotateX(60deg) rotateY(0deg); } 100% { transform: rotateX(60deg) rotateY(360deg); } }
-        @keyframes rotate2 { 0% { transform: rotateX(-60deg) rotateY(0deg); } 100% { transform: rotateX(-60deg) rotateY(360deg); } }
-        @keyframes rotate3 { 0% { transform: rotateX(90deg) rotateZ(0deg); } 100% { transform: rotateX(90deg) rotateZ(360deg); } }
-        @keyframes pulseCore { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(0.8); opacity: 0.7; } }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-        .interface-container { position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center; width: 90%; max-width: 400px; padding: 0 10px; }
-        .title-section { text-align: center; width: 100%; margin-bottom: 30px; }
-        .cyber-title { font-size: clamp(24px, 8vw, 36px); font-weight: 800; color: #fff; letter-spacing: clamp(2px, 1vw, 4px); margin: 0 0 15px 0; text-shadow: 0 0 10px rgba(0, 210, 255, 0.5); white-space: nowrap; }
-        .status-bar { width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; margin-bottom: 8px; position: relative; }
-        .status-fill { height: 100%; background: #00d2ff; box-shadow: 0 0 10px #00d2ff; transition: width 0.1s linear; }
-        .percentage-text { font-size: 12px; color: #00d2ff; letter-spacing: 2px; text-align: right; font-weight: bold; }
-        .modules-list { width: 100%; background: rgba(0, 10, 20, 0.6); border: 1px solid rgba(0, 210, 255, 0.2); backdrop-filter: blur(5px); padding: 15px; border-radius: 4px; max-height: 40vh; overflow-y: auto; scrollbar-width: none; }
-        .modules-list::-webkit-scrollbar { display: none; }
-        .module-item { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; transition: all 0.3s; }
-        .module-item:last-child { border-bottom: none; }
-        .module-item.pending { opacity: 0.4; }
-        .module-item.active { opacity: 1; }
-        .module-item.pulsing .module-text { color: #00d2ff; }
-        .module-item.pulsing .module-status { color: #00d2ff; animation: blink 0.5s infinite; }
-        .module-text { flex-grow: 1; font-weight: 500; letter-spacing: 1px; }
-        .module-status { font-size: 10px; font-weight: bold; letter-spacing: 1px; color: #00ff9d; white-space: nowrap; }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        @media (max-height: 500px) and (orientation: landscape) {
-          .quantum-loader { align-items: flex-start; padding-top: 20px; overflow-y: auto; }
-          .interface-container { flex-direction: row; max-width: 600px; gap: 20px; align-items: center; justify-content: center; }
-          .gyro-scene { width: 100px; height: 100px; margin-bottom: 0; flex-shrink: 0; }
-          .title-section { margin-bottom: 10px; text-align: left; }
-          .modules-list { padding: 10px; max-width: 300px; }
-          .cyber-title { font-size: 24px; margin-bottom: 5px; }
-          .wait-message { bottom: 5px; right: 5px; }
+        .info-icon { min-width: 16px; color: #888; margin-top: 2px; }
+        .info-box p { margin: 0; font-size: 13px; color: #999; line-height: 1.5; }
+        .info-box strong { color: #ccc; font-weight: 500; }
+
+        /* Terminal */
+        .terminal { background: #000; border: 1px solid #333; border-radius: 6px; height: 160px; display: flex; flex-direction: column; overflow: hidden; }
+        .terminal-header { 
+            background: #111; padding: 8px 12px; border-bottom: 1px solid #333; 
+            display: flex; align-items: center; gap: 8px; font-size: 12px; color: #666; 
         }
-        @media (max-width: 380px) { .cyber-title { font-size: 28px; } .module-text { font-size: 13px; } .module-status { font-size: 9px; } }
+        .terminal-content { padding: 12px; font-family: 'SF Mono', 'Monaco', 'Courier New', monospace; font-size: 11px; overflow-y: auto; flex: 1; }
+        .log-line { margin-bottom: 6px; display: flex; gap: 8px; }
+        .timestamp { color: #444; min-width: 70px; }
+        .message { color: #ccc; }
+        .log-line.warning .message { color: #f5a623; }
+        .log-line.success .message { color: #50e3c2; }
+        .log-line.typing { opacity: 0.5; }
+
+        /* Animations */
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; transform: scale(0.95); } }
+        @keyframes transmit { 0% { left: 0; opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { left: 100%; opacity: 0; } }
+        
+        .vercel-loader::-webkit-scrollbar { display: none; }
       `}</style>
     </div>
   );
 };
 
-export default BackendLoader;
+export default ServerWakeupLoader;
