@@ -67,7 +67,6 @@ const useAuth = () => {
     if (storedUser) {
         setCurrentUser(JSON.parse(storedUser));
     } else {
-        // Force open modal if no user found on load
         setIsAuthModalOpen(true);
     }
   }, []);
@@ -99,7 +98,6 @@ const useAuth = () => {
     setCurrentUser(null);
     localStorage.removeItem('campusMateUser');
     toast.success('Logged out successfully');
-    // Force open modal immediately after logout
     setIsAuthModalOpen(true);
   }, []);
 
@@ -113,31 +111,34 @@ const useChat = (currentUser) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
 
+  // --- 1. SYNC HISTORY ON LOAD (FIXES REFRESH ISSUE) ---
   useEffect(() => {
-    if (currentUser) {
-      fetch(`${API_URL}/api/get-chat/${currentUser._id}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.sessions?.length > 0) {
-            setSessions(data.sessions);
-            setCurrentSessionId(data.sessions[0].id);
-          } else {
-            const newId = Date.now();
-            setSessions([{ id: newId, messages: [] }]);
-            setCurrentSessionId(newId); 
+    const loadHistory = async () => {
+      if (currentUser && currentUser._id) {
+        try {
+          const res = await fetch(`${API_URL}/api/history/${currentUser._id}`);
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            setSessions(data);
+            setCurrentSessionId(data[0].id);
           }
-        })
-        .catch(() => console.log('Syncing history locally...'));
-    } else {
+        } catch (err) { loadFromLocalStorage(); }
+      } else { loadFromLocalStorage(); }
+    };
+    const loadFromLocalStorage = () => {
       const saved = localStorage.getItem('chatSessions');
       if (saved) {
         const parsed = JSON.parse(saved);
-        setSessions(parsed);
-        if (parsed.length > 0) setCurrentSessionId(parsed[0].id);
+        if (parsed.length > 0) {
+          setSessions(parsed);
+          setCurrentSessionId(parsed[0].id);
+        }
       }
-    }
+    };
+    loadHistory();
   }, [currentUser]);
 
+  // --- 2. PERSISTENCE HELPER ---
   const saveSessions = useCallback(async (updatedSessions) => {
     setSessions(updatedSessions);
     if (currentUser) {
@@ -153,25 +154,7 @@ const useChat = (currentUser) => {
     }
   }, [currentUser]);
 
-  const createNewChat = useCallback(() => {
-    if (isTyping) return;
-    const newSession = { id: Date.now(), messages: [] };
-    const updated = [newSession, ...sessions];
-    setCurrentSessionId(newSession.id);
-    saveSessions(updated);
-  }, [sessions, isTyping, saveSessions]);
-
-  const deleteChat = useCallback((e, id) => {
-    e.stopPropagation();
-    if (isTyping) return;
-    const updated = sessions.filter(s => s.id !== id);
-    const finalSessions = updated.length ? updated : [{ id: Date.now(), messages: [] }];
-    setSessions(finalSessions);
-    if (currentSessionId === id) setCurrentSessionId(finalSessions[0].id);
-    saveSessions(finalSessions);
-    toast.success('Chat deleted');
-  }, [sessions, currentSessionId, isTyping, saveSessions]);
-
+  // --- STREAM RESPONSE HELPER ---
   const streamResponse = async (fullText, sessionId, currentSessions) => {
     setIsTyping(true);
     let currentText = "";
@@ -211,66 +194,119 @@ const useChat = (currentUser) => {
     saveSessions(finalSessions);
   };
 
+  // --- 3. SEND MESSAGE (FIXES MEMORY & SYNTAX ERROR) ---
   const sendMessage = async (text, file) => {
-    if ((!text.trim() && !file) || isTyping) return;
-    
-    const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    let activeSessionId = currentSessionId;
-    
-    const sessionExists = sessions.some(s => s.id === activeSessionId);
-    if (!sessionExists) {
-        if (sessions.length > 0) {
-            activeSessionId = sessions[0].id;
-            setCurrentSessionId(activeSessionId);
-        } else {
-            const newId = Date.now();
-            const newSession = { id: newId, messages: [] };
-            setSessions([newSession]);
-            setCurrentSessionId(newId);
-            activeSessionId = newId;
-        }
-    }
+  // 1. Prevent execution if input is empty or bot is already responding
+  if ((!text?.trim() && !file) || isTyping) return;
+  
+  const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  let activeSessionId = currentSessionId;
+  
+  // 2. Ensure current session state is accessible
+  const currentSession = sessions.find(s => s.id === activeSessionId) || sessions[0];
+  if (!currentSession) return;
 
-    const userMessage = { 
-        type: 'user', 
-        text: text, 
-        time: timestamp,
-        file: file ? { name: file.name, type: file.type } : null 
-    };
+  // 3. Construct Chat History (Context Memory) for Gemini
+  const chatHistory = (currentSession.messages || []).map(msg => ({
+    role: msg.type === 'user' ? 'user' : 'model',
+    parts: [{ text: msg.text || "" }]
+  }));
 
-    const updatedWithUser = sessions.map(s => 
-      s.id === activeSessionId ? { ...s, messages: [...s.messages, userMessage] } : s
-    );
-    
-    saveSessions(updatedWithUser);
-    setIsLoading(true);
-
-    try {
-      let payload = { message: text };
-      if (file) {
-        const base64Data = await convertFileToBase64(file);
-        payload.file = {
-            name: file.name,
-            mime_type: file.type,
-            data: base64Data 
-        };
-      }
-
-      const response = await fetch(`${API_URL}/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const data = await response.json();
-      setIsLoading(false);
-      await streamResponse(data.response || "I didn't get that. Could you try again?", activeSessionId, updatedWithUser);
-    } catch (error) {
-      setIsLoading(false);
-      await streamResponse("⚠️ I'm having trouble connecting to the server. Please try again later.", activeSessionId, updatedWithUser);
-    }
+  // 4. Create User Message Object for UI
+  const userMessage = { 
+    type: 'user', 
+    text: text, 
+    time: timestamp,
+    // Attach file metadata so ChatArea.jsx can show the attachment chip
+    file: file ? { name: file.name, type: file.type } : null 
   };
 
-  return { sessions, setSessions, currentSessionId, setCurrentSessionId, isLoading, isTyping, sendMessage, createNewChat, deleteChat };
+  // 5. Optimistic UI Update: Add user message to screen immediately
+  const updatedWithUser = sessions.map(s => 
+    s.id === activeSessionId ? { ...s, messages: [...s.messages, userMessage] } : s
+  );
+  
+  setSessions(updatedWithUser);
+  setIsLoading(true);
+
+  try {
+    // 6. Build Payload with User Identity and History
+    let payload = { 
+      message: text || "", 
+      history: chatHistory,
+      userName: currentUser?.username || 'Student'
+    };
+
+    // 7. Handle File Conversion to Base64
+    if (file) {
+      try {
+        const base64Data = await convertFileToBase64(file);
+        payload.file = { 
+          name: file.name, 
+          mime_type: file.type, 
+          data: base64Data 
+        };
+      } catch (fileErr) {
+        console.error("File processing failed:", fileErr);
+        toast.error("Could not process file attachment.");
+      }
+    }
+
+    // 8. Send to Python Backend via Node Proxy
+    const response = await fetch(`${API_URL}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) throw new Error(`Server responded with ${response.status}`);
+
+    const data = await response.json();
+    setIsLoading(false);
+
+    if (data.response) {
+      // 9. Sync Conversation to MongoDB History Route
+      if (currentUser && currentUser._id) {
+        fetch(`${API_URL}/api/history/update`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            userId: currentUser._id, 
+            userMessage: text || "Sent a file", 
+            botResponse: data.response 
+          })
+        }).catch(err => console.error("MongoDB Sync Error:", err));
+      }
+      
+      // 10. Trigger Streaming Effect for the Bot's Reply
+      await streamResponse(data.response, activeSessionId, updatedWithUser);
+    }
+  } catch (error) {
+    setIsLoading(false);
+    console.error("Chat Error:", error);
+    await streamResponse("⚠️ I'm having trouble connecting to the server. Please try again.", activeSessionId, updatedWithUser);
+  }
+};
+
+  return { 
+    sessions, setSessions, currentSessionId, setCurrentSessionId, 
+    isLoading, isTyping, sendMessage, 
+    createNewChat: () => {
+      const newSession = { id: Date.now(), messages: [] };
+      saveSessions([newSession, ...sessions]);
+      setCurrentSessionId(newSession.id);
+    }, 
+    deleteChat: (e, id) => {
+      e.stopPropagation();
+      if (isTyping) return;
+      const updated = sessions.filter(s => s.id !== id);
+      const finalSessions = updated.length ? updated : [{ id: Date.now(), messages: [] }];
+      setSessions(finalSessions);
+      if (currentSessionId === id) setCurrentSessionId(finalSessions[0].id);
+      saveSessions(finalSessions);
+      toast.success('Chat deleted');
+    }
+  };
 };
 
 // --- COMPONENT: USER AVATAR ---
@@ -377,7 +413,6 @@ const App = () => {
   };
 
   return (
-    // ✅ WRAPPED WITH BACKEND LOADER
     <BackendLoader>
         <div className={`${isDarkMode ? 'dark' : ''} h-screen w-full flex overflow-hidden font-sans bg-gray-50 dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100`}>
           <style>{customStyles}</style>
@@ -429,13 +464,7 @@ const App = () => {
               </div>
 
               <div className="flex items-center gap-2 md:gap-4">
-                <button 
-                  onClick={() => setIsDarkMode(!isDarkMode)} 
-                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-[#1a1a1a] text-gray-500 dark:text-gray-400 transition-colors active:scale-95 active:rotate-45"
-                  title="Toggle Theme"
-                >
-                  {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-                </button>
+              
 
                 <div className="h-6 w-px bg-gray-200 dark:bg-gray-800 mx-1"></div>
 
@@ -485,11 +514,9 @@ const App = () => {
           <AuthModal 
             isOpen={isAuthModalOpen} 
             onClose={() => {
-                // Prevent closing if no user is logged in
                 if (currentUser) setIsAuthModalOpen(false);
             }} 
             onLogin={login} 
-            // New Prop: Only allows showing the 'X' button if a user is logged in
             canClose={!!currentUser}
           />
           <div className="relative z-50">{renderModal()}</div>

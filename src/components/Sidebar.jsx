@@ -99,18 +99,13 @@ const Sidebar = ({
         transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1) flex flex-col overflow-hidden
         ${isOpen ? 'w-80 translate-x-0 opacity-100 shadow-2xl md:shadow-none' : 'w-0 -translate-x-full opacity-0 md:translate-x-0 md:w-0 md:border-none'}
       `}>
-        {/* UPDATED WRAPPER: 
-            1. 'overflow-y-auto' enables scrolling for the WHOLE sidebar on mobile.
-            2. 'md:overflow-hidden' disables whole-sidebar scrolling on desktop (so only content scrolls).
-            3. 'custom-scrollbar' applied here for mobile view.
-        */}
         <div className={`
           flex flex-col h-full w-80 transition-opacity duration-300 
           overflow-y-auto md:overflow-hidden custom-scrollbar
           ${isOpen ? 'opacity-100 delay-100' : 'opacity-0'}
         `}>
 
-          {/* Header - UPDATED: Sticky top-0 so X button is always visible on mobile */}
+          {/* Header */}
           <div className="sticky top-0 z-50 h-20 flex items-center justify-between px-6 border-b border-gray-200 dark:border-gray-800 shrink-0 bg-white/95 dark:bg-[#1a1a1a]/95 backdrop-blur-sm">
             <div className="flex flex-col gap-1">
               <h1 className="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white leading-none">
@@ -200,16 +195,10 @@ const Sidebar = ({
 
           <div className="h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-800 to-transparent mx-5 shrink-0" />
 
-          {/* Content Area - UPDATED: 
-              1. Removed 'overflow-y-auto' from base class (so it doesn't trap scroll on mobile).
-              2. Added 'md:overflow-y-auto' (re-enables internal scrolling ONLY on desktop).
-              3. 'overflow-visible' allows content to expand naturally on mobile.
-          */}
+          {/* Content Area */}
           <div className="flex-1 p-5 space-y-5 overflow-visible md:overflow-y-auto md:custom-scrollbar">
             {sidebarMode === 'tools' && (
               <div className="animate-fade-in space-y-5">
-
-                {/* Explore */}
                 <AccordionItem 
                   title="Campus Explore" 
                   icon={Compass} 
@@ -227,7 +216,6 @@ const Sidebar = ({
                   ))}
                 </AccordionItem>
 
-                {/* Updates */}
                 <AccordionItem 
                   title="Latest Updates" 
                   icon={Bell} 
@@ -246,56 +234,18 @@ const Sidebar = ({
                   ))}
                 </AccordionItem>
 
-                {/* 2-Column Tool Grid */}
                 <div>
                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">Quick Access</h3>
                    <div className="grid grid-cols-2 gap-3">
-                      <ToolCard 
-                        label="Notes" 
-                        icon={Download} 
-                        colorClass="text-[#00B291]" 
-                        bgClass="bg-[#00B291]/10"
-                        onClick={() => setActiveModal('notes')} 
-                      />
-                      <ToolCard 
-                        label="Apply leave" 
-                        icon={Mail} 
-                        colorClass="text-blue-500" 
-                        bgClass="bg-blue-50 dark:bg-blue-900/20"
-                        onClick={() => setActiveModal('email')} 
-                      />
-                      <ToolCard 
-                        label="CGPA Calc" 
-                        icon={Calculator} 
-                        colorClass="text-purple-500" 
-                        bgClass="bg-purple-50 dark:bg-purple-900/20"
-                        onClick={() => setActiveModal('gpa')} 
-                      />
-                      <ToolCard 
-                        label="Navigate" 
-                        icon={Map} 
-                        colorClass="text-indigo-500" 
-                        bgClass="bg-indigo-50 dark:bg-indigo-900/20"
-                        onClick={() => setActiveModal('map')} 
-                      />
-                      <ToolCard 
-                        label="Complaints" 
-                        icon={AlertTriangle} 
-                        colorClass="text-orange-500" 
-                        bgClass="bg-orange-50 dark:bg-orange-900/20"
-                        onClick={() => setActiveModal('complaint')} 
-                      />
-                      <ToolCard 
-                        label="Lost & Found" 
-                        icon={Search} 
-                        colorClass="text-red-500" 
-                        bgClass="bg-red-50 dark:bg-red-900/20"
-                        onClick={() => setActiveModal('lostfound')} 
-                      />
+                      <ToolCard label="Notes" icon={Download} colorClass="text-[#00B291]" bgClass="bg-[#00B291]/10" onClick={() => setActiveModal('notes')} />
+                      <ToolCard label="Apply leave" icon={Mail} colorClass="text-blue-500" bgClass="bg-blue-50 dark:bg-blue-900/20" onClick={() => setActiveModal('email')} />
+                      <ToolCard label="CGPA Calc" icon={Calculator} colorClass="text-purple-500" bgClass="bg-purple-50 dark:bg-purple-900/20" onClick={() => setActiveModal('gpa')} />
+                      <ToolCard label="Navigate" icon={Map} colorClass="text-indigo-500" bgClass="bg-indigo-50 dark:bg-indigo-900/20" onClick={() => setActiveModal('map')} />
+                      <ToolCard label="Complaints" icon={AlertTriangle} colorClass="text-orange-500" bgClass="bg-orange-50 dark:bg-orange-900/20" onClick={() => setActiveModal('complaint')} />
+                      <ToolCard label="Lost & Found" icon={Search} colorClass="text-red-500" bgClass="bg-red-50 dark:bg-red-900/20" onClick={() => setActiveModal('lostfound')} />
                    </div>
                 </div>
 
-                {/* Semester Progress */}
                 <div className="p-4 rounded-2xl bg-gradient-to-r from-gray-50 to-white dark:from-[#202020] dark:to-[#151515] border border-gray-100 dark:border-gray-800 shadow-sm">
                   <div className="flex justify-between items-center mb-3">
                     <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Semester Status</span>
@@ -310,7 +260,6 @@ const Sidebar = ({
                   </div>
                 </div>
 
-                {/* Daily Insight */}
                 <div className="p-4 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/10 border border-amber-100 dark:border-amber-900/30 relative overflow-hidden group">
                    <div className="absolute -top-2 -right-2 p-2 opacity-10 group-hover:opacity-20 transition-opacity"><Clock className="h-20 w-20 text-yellow-500"/></div>
                    <div className="flex items-center gap-2 mb-2 relative z-10">
@@ -323,7 +272,6 @@ const Sidebar = ({
                      "The central library has extended hours this week. Great for group studies!"
                    </p>
                 </div>
-
               </div>
             )}
 
@@ -361,9 +309,11 @@ const Sidebar = ({
                           <span className="text-[10px] text-gray-400">{new Date(session.id).toLocaleDateString()}</span>
                         </div>
                       </div>
+                      
+                      {/* MODIFIED: Removed opacity-0 and group-hover:opacity-100 to make it always visible */}
                       <button
                         onClick={(e) => { e.stopPropagation(); handleDeleteChat(e, session.id); }}
-                        className="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
+                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
                         title="Delete Chat"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -379,7 +329,7 @@ const Sidebar = ({
             )}
           </div>
 
-          {/* Footer - No changes needed, it flows naturally on mobile now */}
+          {/* Footer */}
           <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-[#1a1a1a]/50 shrink-0 backdrop-blur-sm">
             <a href="https://rljit.in/" target="_blank" rel="noreferrer noopener" className="flex items-center justify-center gap-2 w-full py-2.5 text-xs font-semibold text-gray-500 hover:text-[#00B291] dark:hover:text-[#00F5C8] dark:text-gray-400 transition-colors group rounded-lg hover:bg-white dark:hover:bg-[#202020]">
               <Globe className="h-3.5 w-3.5 group-hover:animate-spin-slow" /> 

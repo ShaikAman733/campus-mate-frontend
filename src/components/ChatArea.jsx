@@ -5,7 +5,6 @@ import remarkGfm from 'remark-gfm';
 import { FileText } from 'lucide-react';
 
 import botLogo from '../assets/campus-logo.png';
-import userLogo from '../assets/user-logo.png'; 
 
 const ChatArea = ({ messages, isLoading, suggestionText, currentUser }) => {
   const messagesEndRef = useRef(null);
@@ -52,40 +51,31 @@ const ChatArea = ({ messages, isLoading, suggestionText, currentUser }) => {
               const isUser = msg.type === 'user';
               return (
                 <div key={index} className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2 duration-300`}>
-                  {/* 1. Adjusted Max Width and Gap for Mobile */}
                   <div className={`flex max-w-[90%] md:max-w-[75%] gap-2 md:gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
                     
-                    {/* AVATAR CONTAINER */}
-                    {/* 2. Reduced Avatar size on mobile (h-8 w-8) -> Desktop (md:h-12 md:w-12) */}
-                    <div className={`shrink-0 h-8 w-8 md:h-12 md:w-12 rounded-full flex items-center justify-center text-xs font-bold shadow-sm select-none overflow-hidden ${isUser ? 'bg-gray-800 text-white  dark:text-black' : ' dark:bg-[#1a1a1a] dark:border-gray-700'}`}>
-                      {isUser ? (
-                        <img 
-                          src={userLogo} 
-                          alt="User" 
-                          className="shrink-0 h-8 w-8 md:h-12 md:w-12 object-cover" 
-                        />
-                      ) : (
+                    {/* AVATAR CONTAINER - Only show for bot */}
+                    {!isUser && (
+                      <div className={`shrink-0 h-8 w-8 md:h-12 md:w-12 rounded-full flex items-center justify-center text-xs font-bold shadow-sm select-none overflow-hidden dark:bg-[#1a1a1a] dark:border-gray-700`}>
                         <img 
                           src={botLogo} 
                           alt="AI" 
                           className="shrink-0 h-8 w-8 md:h-12 md:w-12 object-contain" 
                         />
-                      )}
-                    </div>
+                      </div>
+                    )}
 
                     {/* MESSAGE BUBBLE */}
-                    {/* 3. Reduced Padding on mobile (px-3 py-2) -> Desktop (md:px-5 md:py-3.5) */}
                     <div className={`relative px-3 py-2 md:px-5 md:py-3.5 text-sm md:text-base shadow-sm ${isUser ? 'bg-white text-gray-800 dark:bg-[#262626] dark:text-gray-100 rounded-2xl rounded-tr-sm' : 'bg-white dark:bg-[#1a1a1a] border border-gray-100 dark:border-gray-800 text-gray-800 dark:text-gray-200 rounded-2xl rounded-tl-sm'}`}>
                       
                       {msg.file && (
                         <div className="mb-3 p-2 bg-gray-100 dark:bg-[#333] rounded-lg flex items-center gap-3 border border-gray-200 dark:border-gray-600">
-                           <div className="p-2 bg-white dark:bg-black rounded-full">
+                            <div className="p-2 bg-white dark:bg-black rounded-full">
                               <FileText className="h-5 w-5 text-[#00B291]" />
-                           </div>
-                           <div className="flex flex-col overflow-hidden">
+                            </div>
+                            <div className="flex flex-col overflow-hidden">
                               <span className="text-xs font-bold truncate max-w-[150px]">{msg.file.name}</span>
                               <span className="text-[10px] opacity-70 uppercase">{msg.file.type.split('/')[1] || 'FILE'}</span>
-                           </div>
+                            </div>
                         </div>
                       )}
 
@@ -113,7 +103,6 @@ const ChatArea = ({ messages, isLoading, suggestionText, currentUser }) => {
             
             {isLoading && (
               <div className="flex w-full justify-start animate-pulse">
-                {/* 4. Adjusted Loading Skeleton for Mobile */}
                 <div className="flex max-w-[90%] md:max-w-[75%] gap-2 md:gap-3">
                   <img src={botLogo} alt="Loading..." className="shrink-0 h-8 w-8 md:h-12 md:w-12 object-contain opacity-70" />
                   <div className="flex items-center gap-1 px-3 py-2 md:px-4 md:py-3 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-2xl rounded-tl-sm">

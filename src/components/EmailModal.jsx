@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Mail } from 'lucide-react';
 import Modal from './Modal';
-import { departments } from '../data';
+import { departments } from '../data.js';
 
 const EmailModal = ({ isOpen, onClose }) => {
   const [mailName, setMailName] = useState('');
