@@ -84,6 +84,8 @@ const Sidebar = ({
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
         .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; }
+        @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fade-in 0.4s ease forwards; }
       `}</style>
 
       {/* MOBILE OVERLAY */}
@@ -99,24 +101,15 @@ const Sidebar = ({
         transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1) flex flex-col overflow-hidden
         ${isOpen ? 'w-80 translate-x-0 opacity-100 shadow-2xl md:shadow-none' : 'w-0 -translate-x-full opacity-0 md:translate-x-0 md:w-0 md:border-none'}
       `}>
+        {/* MODIFIED: Changed overflow-y-auto to apply to all screens, removed md:overflow-hidden */}
         <div className={`
           flex flex-col h-full w-80 transition-opacity duration-300 
-          overflow-y-auto md:overflow-hidden custom-scrollbar
+          overflow-y-auto custom-scrollbar
           ${isOpen ? 'opacity-100 delay-100' : 'opacity-0'}
         `}>
 
           {/* Header */}
-          <div className="sticky top-0 z-50 h-20 flex items-center justify-between px-6 border-b border-gray-200 dark:border-gray-800 shrink-0 bg-white/95 dark:bg-[#1a1a1a]/95 backdrop-blur-sm">
-            <div className="flex flex-col gap-1">
-              <h1 className="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white leading-none">
-                Campus<span className="text-[#00B291] dark:text-[#00F5C8]">Mate</span>
-              </h1>
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Your campus, simplified</span>
-            </div>
-            <button onClick={() => setIsOpen(false)} className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-              <X className="h-5 w-5 text-gray-500" />
-            </button>
-          </div>
+          
 
           {/* Profile Card */}
           <div className="px-5 pt-6 pb-0 shrink-0">
@@ -151,7 +144,7 @@ const Sidebar = ({
                 </div>
                 
                 <div className="ml-auto p-1.5 rounded-lg text-gray-400 group-hover:bg-gray-100 dark:group-hover:bg-[#333] group-hover:text-[#00B291] dark:group-hover:text-[#00F5C8] transition-all">
-                   <Settings className="h-4 w-4" />
+                    <Settings className="h-4 w-4" />
                 </div>
               </div>
             </div>
@@ -195,8 +188,8 @@ const Sidebar = ({
 
           <div className="h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-800 to-transparent mx-5 shrink-0" />
 
-          {/* Content Area */}
-          <div className="flex-1 p-5 space-y-5 overflow-visible md:overflow-y-auto md:custom-scrollbar">
+          {/* Content Area - MODIFIED: Removed md:overflow-y-auto to allow parent to handle all scrolling */}
+          <div className="flex-1 p-5 space-y-5 overflow-visible">
             {sidebarMode === 'tools' && (
               <div className="animate-fade-in space-y-5">
                 <AccordionItem 
@@ -206,7 +199,7 @@ const Sidebar = ({
                   isOpen={expandedSidebarItem === 'explore'}
                   onToggle={() => toggleSidebarItem('explore')}
                 >
-                   {departments.map((dept) => (
+                    {departments.map((dept) => (
                     <div key={dept.id} onClick={() => window.open(dept.link, '_blank')} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-[#252525] cursor-pointer group">
                       <div className="flex flex-col">
                         <span className="text-xs font-medium text-gray-700 dark:text-gray-300 group-hover:text-[#00B291] dark:group-hover:text-[#00F5C8] transition-colors">{dept.name}</span>
@@ -310,7 +303,6 @@ const Sidebar = ({
                         </div>
                       </div>
                       
-                      {/* MODIFIED: Removed opacity-0 and group-hover:opacity-100 to make it always visible */}
                       <button
                         onClick={(e) => { e.stopPropagation(); handleDeleteChat(e, session.id); }}
                         className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
@@ -330,7 +322,7 @@ const Sidebar = ({
           </div>
 
           {/* Footer */}
-          <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-[#1a1a1a]/50 shrink-0 backdrop-blur-sm">
+          <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-[#1a1a1a]/50 shrink-0 backdrop-blur-sm mt-auto">
             <a href="https://rljit.in/" target="_blank" rel="noreferrer noopener" className="flex items-center justify-center gap-2 w-full py-2.5 text-xs font-semibold text-gray-500 hover:text-[#00B291] dark:hover:text-[#00F5C8] dark:text-gray-400 transition-colors group rounded-lg hover:bg-white dark:hover:bg-[#202020]">
               <Globe className="h-3.5 w-3.5 group-hover:animate-spin-slow" /> 
               <span>Visit RLJIT Website</span> 
