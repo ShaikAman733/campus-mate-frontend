@@ -301,7 +301,7 @@ const App = () => {
         const res = await fetch(`${API_URL}/api/lostfound?t=${Date.now()}`);
         if (res.ok) {
           setIsBackendReady(true);
-          toast.success("Connection Secured. All systems online.", { id: 'backend-ready' });
+          toast.success("Connected backend.", { id: 'backend-ready' });
         } else {
           setTimeout(checkServer, 3000);
         }
