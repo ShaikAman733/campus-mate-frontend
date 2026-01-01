@@ -20,7 +20,7 @@ const EmailModal = ({ isOpen, onClose }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Email Generator" icon={Mail}>
+    <Modal isOpen={isOpen} onClose={onClose} title="Leave Generator" icon={Mail}>
        <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <input type="text" placeholder="Your Name" value={mailName} onChange={(e) => setMailName(e.target.value)} className="w-full px-4 py-3 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#252525] text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00B291]/50 dark:focus:ring-[#00F5C8]/50" />

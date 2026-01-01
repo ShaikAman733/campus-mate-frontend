@@ -65,7 +65,7 @@ const GPACalculatorModal = ({ isOpen, onClose }) => {
   }, [subjects]);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="GPA Calculator" icon={Calculator}>
+    <Modal isOpen={isOpen} onClose={onClose} title="CGPA Calculator" icon={Calculator}>
       <div className="space-y-4">
         
         {/* Header Row */}

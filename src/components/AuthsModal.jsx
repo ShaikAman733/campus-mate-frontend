@@ -4,7 +4,8 @@ import {
   X, User, Lock, ChevronRight, GraduationCap, Briefcase, 
   Loader2, AlertCircle, IdCard, ArrowRight
 } from 'lucide-react';
-import { toast } from 'react-hot-toast'; // Import Toast
+import { toast } from 'react-hot-toast';
+import guestIcon from '../assets/guest-avatar.png'; // Import Toast
 
 const AuthModal = ({ isOpen, onClose, onLogin, canClose = true }) => {
   const [isRegistering, setIsRegistering] = useState(false);
@@ -51,7 +52,8 @@ const AuthModal = ({ isOpen, onClose, onLogin, canClose = true }) => {
       _id: `guest_${uniqueId}_${Date.now()}`, 
       username: `Guest`, 
       role: 'guest',
-      isGuest: true
+      isGuest: true,
+      avatar: guestIcon
     };
 
     // 4. Pass this unique user to the parent
