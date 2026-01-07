@@ -5,7 +5,7 @@ import {
   Loader2, AlertCircle, IdCard, ArrowRight
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import guestIcon from '../assets/guest-avatar.png'; // Import Toast
+import guestIcon from '../assets/guest-avatar.png'; 
 
 const AuthModal = ({ isOpen, onClose, onLogin, canClose = true }) => {
   const [isRegistering, setIsRegistering] = useState(false);
@@ -29,7 +29,7 @@ const AuthModal = ({ isOpen, onClose, onLogin, canClose = true }) => {
 
   if (!isOpen) return null;
 
-  // --- FIXED: UNIQUE GUEST ID + TOAST NOTIFICATION ---
+  
   const handleGuestAccess = () => {
     // 1. Trigger the Bottom Toast Notification
     toast.error("Guest Mode: Your history will not be saved.", {
