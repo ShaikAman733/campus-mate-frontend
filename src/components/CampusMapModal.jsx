@@ -6,7 +6,6 @@ import {
   CornerUpLeft, CheckCircle, RotateCcw 
 } from 'lucide-react';
 
-// --- HELPERS & CONSTANTS ---
 
 const CATEGORIES = ["All", "Academic", "Admin", "Food", "Labs", "Hostel", "Sports"];
 
@@ -32,7 +31,7 @@ const CAMPUS_BLOCKS = [
   { id: 'Residential Area', label: 'Student Hostels', color: 'from-pink-500 to-rose-600', icon: '🏠', col: 'col-span-3 row-span-1' },
 ];
 
-// --- INTERNAL COMPONENT: MODAL ---
+
 const Modal = ({ isOpen, onClose, title, icon: Icon, children }) => {
   if (!isOpen) return null;
   return (
@@ -58,7 +57,7 @@ const Modal = ({ isOpen, onClose, title, icon: Icon, children }) => {
   );
 };
 
-// --- MAIN COMPONENT ---
+
 const CampusMapModal = ({ isOpen, onClose }) => {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
@@ -128,7 +127,7 @@ const CampusMapModal = ({ isOpen, onClose }) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={isNavigating ? "Navigating..." : "Campus Navigator"} icon={isNavigating ? Navigation : Map}>
       
-      {/* 1. HEADER CONTROLS (Hidden during navigation) */}
+      
       {!isNavigating && (
         <div className="flex flex-col gap-3 p-4 bg-white dark:bg-[#111] border-b border-gray-100 dark:border-gray-800 shrink-0 shadow-sm z-10">
           <div className="flex gap-3">
@@ -172,10 +171,10 @@ const CampusMapModal = ({ isOpen, onClose }) => {
         </div>
       )}
 
-      {/* 2. MAIN CONTENT AREA */}
+      
       <div className="relative h-[480px] bg-gray-50 dark:bg-[#0a0a0a]">
         
-        {/* VIEW A: INTERACTIVE GRID MAP */}
+       
         {!selectedLocation && viewMode === 'map' && (
             <div className="absolute inset-0 p-4 overflow-y-auto custom-scrollbar">
                 <div className="flex justify-between items-center mb-4 px-1">
@@ -202,7 +201,7 @@ const CampusMapModal = ({ isOpen, onClose }) => {
             </div>
         )}
 
-        {/* VIEW B: LIST RESULTS */}
+     
         {!selectedLocation && viewMode === 'list' && (
             <div className="absolute inset-0 flex flex-col animate-in fade-in duration-300 bg-gray-50 dark:bg-[#0a0a0a]">
                 {selectedBlock && (
@@ -241,7 +240,7 @@ const CampusMapModal = ({ isOpen, onClose }) => {
             </div>
         )}
 
-        {/* --- VIEW C: DETAILS OVERLAY --- */}
+      
         {selectedLocation && !isNavigating && (
             <div className="absolute inset-0 bg-white dark:bg-[#111] z-20 flex flex-col animate-in slide-in-from-bottom-5 duration-300">
                 <div className="h-36 bg-gradient-to-br from-[#00B291] via-teal-700 to-emerald-900 shrink-0 relative overflow-hidden">
@@ -289,11 +288,11 @@ const CampusMapModal = ({ isOpen, onClose }) => {
             </div>
         )}
 
-        {/* --- VIEW D: ACTIVE NAVIGATION OVERLAY --- */}
+        
         {isNavigating && selectedLocation && (
           <div className="absolute inset-0 bg-[#00B291] z-30 flex flex-col animate-in fade-in duration-300 text-white">
             
-            {/* Nav Header */}
+           
             <div className="p-6 flex justify-between items-start shrink-0">
                <div>
                   <p className="text-[#005c4b] font-bold text-xs uppercase tracking-wider mb-1">Navigating to</p>
@@ -304,19 +303,18 @@ const CampusMapModal = ({ isOpen, onClose }) => {
                </button>
             </div>
 
-            {/* Nav Body */}
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center relative overflow-hidden">
-                {/* Background Pulse Effect */}
+              
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-10">
                   <div className="w-64 h-64 rounded-full border-[20px] border-white animate-ping"></div>
                 </div>
 
-                {/* Big Direction Icon */}
+                
                 <div className="w-32 h-32 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mb-8 shadow-2xl relative z-10 animate-bounce-slow">
                    {getStepIcon(getRouteSteps(selectedLocation.route)[currentStep])}
                 </div>
 
-                {/* Instruction Text */}
+                
                 <div className="relative z-10 animate-in slide-in-from-bottom-4 duration-500 key={currentStep}">
                   <h3 className="text-3xl font-black mb-4 leading-tight">
                     {getRouteSteps(selectedLocation.route)[currentStep]}
@@ -327,7 +325,7 @@ const CampusMapModal = ({ isOpen, onClose }) => {
                 </div>
             </div>
 
-            {/* Nav Footer Controls */}
+            
             <div className="p-6 bg-black/10 backdrop-blur-sm shrink-0">
                <div className="flex items-center gap-4">
                   <button 
@@ -354,7 +352,7 @@ const CampusMapModal = ({ isOpen, onClose }) => {
                     </button>
                   )}
                </div>
-               {/* Progress Bar */}
+               
                <div className="mt-6 h-1.5 bg-black/20 rounded-full overflow-hidden">
                  <div 
                    className="h-full bg-white transition-all duration-500 ease-out"

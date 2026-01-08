@@ -7,7 +7,6 @@ const ChatInput = ({
   inputMessage,
   setInputMessage,
   handleSendMessage,
-  // handleKeyPress prop is removed/ignored here because we define a local one
   isLoading,
   isTyping
 }) => {

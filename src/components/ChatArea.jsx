@@ -63,7 +63,7 @@ const ChatArea = ({ messages, isLoading, suggestionText, currentUser }) => {
                       </div>
                     )}
 
-                    {/* MESSAGE BUBBLE - Added min-w-0 and overflow-hidden */}
+                    
                     <div className={`relative px-3 py-2 md:px-5 md:py-3.5 text-sm md:text-base shadow-sm min-w-0 overflow-hidden ${isUser ? 'bg-white text-gray-800 dark:bg-[#262626] dark:text-gray-100 rounded-2xl rounded-tr-sm' : 'bg-white dark:bg-[#1a1a1a] border border-gray-100 dark:border-gray-800 text-gray-800 dark:text-gray-200 rounded-2xl rounded-tl-sm'}`}>
 
                       {msg.file && (
@@ -103,7 +103,7 @@ const ChatArea = ({ messages, isLoading, suggestionText, currentUser }) => {
                                   <span className="text-[10px] font-mono opacity-50 uppercase tracking-widest">Editor</span>
                                 </div>
 
-                                {/* Scrollable/Wrappable Code Area */}
+                                {/* Scrollable Code Area */}
                                 <div className="overflow-x-auto custom-scrollbar">
                                   <code
                                     className="block p-4 font-mono text-[11px] md:text-sm text-gray-800 dark:text-gray-300 whitespace-pre-wrap break-all md:break-normal leading-relaxed"

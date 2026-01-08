@@ -14,7 +14,7 @@ const NotesModal = ({ isOpen, onClose }) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Download Notes" icon={Download}>
       <div className="space-y-4">
-         <p className="text-sm text-gray-500 dark:text-gray-400">Enter Subject Code (e.g., 18CS51) to find relevant notes from VTU Circle.</p>
+         <p className="text-sm text-gray-500 dark:text-gray-400">Enter Subject Code (e.g., BAI701) to find relevant notes from VTU Circle.</p>
          <div className="flex gap-3">
            <input 
              type="text" 
